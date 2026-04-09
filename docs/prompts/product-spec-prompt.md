@@ -7,6 +7,7 @@ Reguły:
 - Opisuj zachowanie funkcjonalności z perspektywy użytkownika i kontraktu funkcjonalnego.
 - Nie opisuj sposobu implementacji.
 - Jeśli funkcjonalność już istnieje, rozdziel obecne zachowanie od docelowego, jeśli to potrzebne.
+- Jeśli nie da się czegoś pewnie ustalić, nie zgaduj — dodaj to jako otwarte pytanie albo ograniczenie.
 
 `03-product-spec.md` musi zawierać:
 - cel funkcjonalności,
@@ -16,7 +17,8 @@ Reguły:
 - zasady działania,
 - edge case'y,
 - ograniczenia,
-- out of scope.
+- out of scope,
+- kryteria akceptacji.
 
 `03-product-spec.md` nie może zawierać:
 - nazw plików źródłowych,
@@ -25,7 +27,39 @@ Reguły:
 - schematu bazy danych,
 - algorytmów,
 - szczegółów backupu, storage i walidacji wewnętrznej,
-- tasków implementacyjnych.
+- tasków implementacyjnych,
+- szczegółowego opisu przetwarzania danych wewnątrz systemu,
+- opisu architektury technicznej.
 
-CLI commands i ich publiczne zachowanie mogą być opisane tylko wtedy, gdy są częścią interfejsu użytkownika.
-Jeśli fragment opisuje sposób implementacji zamiast zachowania funkcjonalności, pomiń go albo zostaw do `05-tech-spec.md`.
+Dodatkowe zasady:
+- Jeśli funkcjonalność ma interfejs CLI, API lub UI, opisuj go tylko na poziomie celu i efektu dla użytkownika.
+- Nie opisuj pełnej listy flag, parametrów, payloadów, struktur odpowiedzi ani technicznych formatów wejścia/wyjścia, jeśli nie są krytyczne dla zrozumienia funkcjonalności.
+- Nie opisuj wewnętrznej mechaniki systemu, jeśli użytkownik widzi tylko efekt końcowy.
+- Nie opisuj etapów technicznych przetwarzania, mechanizmów backupu, reguł walidacji wewnętrznej ani kroków pipeline'u systemowego.
+- Jeśli jakiś fragment bardziej pasuje do `05-tech-spec.md`, pomiń go.
+- Jeśli wahasz się, czy coś należy do product spec czy tech spec, wybierz poziom bardziej produktowy i bardziej zewnętrzny.
+
+Zasady dla sekcji:
+- `Główne flow` ma opisywać typowe użycie funkcjonalności krok po kroku z perspektywy użytkownika.
+- `Zasady działania` mają opisywać publiczne, obserwowalne reguły zachowania funkcjonalności.
+- `Edge case'y` mają opisywać przypadki istotne z perspektywy użytkownika lub publicznego zachowania systemu, a nie błędy wewnętrznej implementacji.
+- `Ograniczenia` mają opisywać realne granice funkcjonalności istotne dla użytkownika lub właściciela produktu.
+- `Out of scope` ma jasno odcinać rzeczy niewchodzące do tej funkcjonalności.
+- `Kryteria akceptacji` mają opisywać obserwowalne zachowanie funkcjonalności, po którym można stwierdzić, że działa zgodnie z celem.
+
+Jeśli funkcjonalność już istnieje:
+- możesz opisać `Obecne zachowanie` i `Docelowe zachowanie`,
+- ale tylko wtedy, gdy ta różnica jest ważna dla zrozumienia zakresu funkcjonalnego,
+- nie zamieniaj dokumentu w analizę istniejącego kodu.
+
+Preferowany styl:
+- krótkie sekcje,
+- krótkie akapity lub listy,
+- zero marketingu,
+- zero ogólników,
+- zero treści technicznych niepotrzebnych na tym etapie.
+
+Celem `03-product-spec.md` jest odpowiedź na pytanie:
+`Co ta funkcjonalność robi, dla kogo, jak ma działać i po czym poznamy, że działa poprawnie?`
+Nie celem tego pliku jest odpowiedź na pytanie:
+`Jak dokładnie zostanie to zaimplementowane?`
