@@ -1,12 +1,14 @@
-Utwórz lub zaktualizuj 02-discovery.md na podstawie 01-idea.md.
+Utwórz lub zaktualizuj `02-discovery.md` na podstawie `01-idea.md`.
 
 Reguły:
-- Jeśli 01-idea.md nie istnieje, zatrzymaj się i napisz tylko: "Brak 01-idea.md. Nie można przygotować 02-discovery.md."
+- Jeśli `01-idea.md` nie istnieje, zatrzymaj się i napisz tylko: `Brak 01-idea.md. Nie można przygotować 02-discovery.md.`
+- Pisz zwięźle i konkretnie.
+- To jest etap analizy, nie finalnych decyzji.
 - Nie twórz architektury technicznej.
 - Nie twórz tasków.
-- Nie zapisuj finalnych decyzji jako pewników.
+- Nie opisuj szczegółowych rozwiązań implementacyjnych.
 
-02-discovery.md musi zawierać:
+`02-discovery.md` musi zawierać:
 - pytania otwarte,
 - luki informacyjne,
 - ryzyka,
@@ -14,6 +16,10 @@ Reguły:
 - alternatywne kierunki,
 - punkty wymagające decyzji.
 
-Jeśli funkcjonalność już istnieje w kodzie, uwzględnij obecne zachowanie i wskaż co trzeba doprecyzować względem aktualnego systemu.
+Jeśli funkcjonalność już istnieje w kodzie, uwzględnij obecne zachowanie i wskaż:
+- co już istnieje,
+- czego brakuje,
+- co jest niejasne,
+- co wymaga decyzji.
 
-Pisz krótko i konkretnie.
+Nie zamieniaj discovery w product-spec ani tech-spec.

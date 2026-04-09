@@ -25,15 +25,15 @@ Dokumenty w `product/` muszą:
 - dotyczyć całego produktu,
 - być krótkie i konkretne,
 - używać prostego języka,
-- być aktualizowane świadomie,
-- być spójne ze sobą.
+- być spójne ze sobą,
+- pomagać podejmować decyzje o kierunku produktu.
 
 Dokumenty w `product/` nie mogą:
 - opisywać pojedynczego feature'a w szczególe,
 - zawierać architektury technicznej konkretnej funkcjonalności,
 - zawierać listy tasków developerskich,
-- zawierać luźnych notatek implementacyjnych,
-- mieszać poziomu produktu z poziomem feature'a.
+- zawierać nazw modułów, plików i bibliotek,
+- być inwentaryzacją aktualnego kodu.
 
 ## `01-vision.md`
 
@@ -41,22 +41,36 @@ Dokumenty w `product/` nie mogą:
 
 `01-vision.md` definiuje kierunek produktu.
 
-Musi zawierać:
-- krótki opis produktu,
-- opis docelowego użytkownika lub grupy użytkowników,
-- opis problemu, który produkt rozwiązuje,
-- główną wartość produktu,
+### Plik musi zawierać
+
+`01-vision.md` musi zawierać:
+- czym jest produkt,
+- dla kogo jest,
+- jaki problem rozwiązuje,
+- jaka jest jego główna wartość,
 - kluczowe założenia produktowe,
-- długoterminowy kierunek rozwoju.
+- długoterminowy kierunek.
+
+### Plik nie może zawierać
+
+`01-vision.md` nie może zawierać:
+- tabel bazy danych,
+- nazw modułów i plików,
+- nazw bibliotek i frameworków,
+- listy komend CLI,
+- flag CLI,
+- szczegółów implementacyjnych,
+- szczegółowej inwentaryzacji stanu kodu,
+- backlogu tasków.
 
 ### Definition of done
 
 `01-vision.md` jest gotowy, gdy:
-- po przeczytaniu wiadomo czym jest produkt,
-- po przeczytaniu wiadomo dla kogo jest produkt,
-- po przeczytaniu wiadomo jaki problem rozwiązuje,
-- po przeczytaniu wiadomo jaka jest jego główna wartość,
-- po przeczytaniu wiadomo w jakim kierunku ma się rozwijać.
+- wiadomo czym jest produkt,
+- wiadomo dla kogo jest,
+- wiadomo jaki problem rozwiązuje,
+- wiadomo jaka jest jego główna wartość,
+- wiadomo w jakim kierunku ma się rozwijać.
 
 ## `02-roadmap.md`
 
@@ -64,12 +78,25 @@ Musi zawierać:
 
 `02-roadmap.md` definiuje priorytety rozwoju produktu.
 
-Musi zawierać:
-- listę głównych obszarów rozwoju,
+### Plik musi zawierać
+
+`02-roadmap.md` musi zawierać:
+- główne obszary rozwoju,
 - priorytety uporządkowane od najważniejszych do mniej ważnych,
-- podział na teraz / później / nie teraz albo równoważny,
+- podział na `teraz / później / nie teraz` albo równoważny,
 - krótkie uzasadnienie priorytetów,
 - zależności wysokiego poziomu między obszarami.
+
+### Plik nie może zawierać
+
+`02-roadmap.md` nie może zawierać:
+- liczby tabel,
+- liczby reguł,
+- szczegółów schematu bazy,
+- nazw modułów i plików,
+- szczegółowego spisu tego, co już istnieje w kodzie,
+- tasków implementacyjnych,
+- niskopoziomowych decyzji technicznych.
 
 ### Definition of done
 
@@ -78,24 +105,16 @@ Musi zawierać:
 - wiadomo co jest później,
 - wiadomo co nie wchodzi teraz,
 - roadmapa nie jest backlogiem tasków,
+- roadmapa nie jest inwentaryzacją kodu,
 - roadmapa jest spójna z `01-vision.md`.
 
-## Relacja między plikami
+## Bootstrap istniejącego projektu
 
-`01-vision.md` definiuje kierunek produktu.
-`02-roadmap.md` definiuje kolejność rozwoju produktu.
-
-Jeżeli jakaś informacja:
-- dotyczy całego produktu, trafia do `product/`,
-- dotyczy jednej funkcjonalności, trafia do `features/<feature-name>/`.
-
-## Źródła prawdy
-
-W folderze `product/` obowiązuje następujący model:
-- `01-vision.md` = źródło prawdy o kierunku produktu,
-- `02-roadmap.md` = źródło prawdy o priorytetach rozwoju.
-
-Jeżeli dokumenty są niespójne, najpierw popraw `01-vision.md`, a potem dostosuj `02-roadmap.md`.
+Jeśli projekt już istnieje:
+- `01-vision.md` ma opisać sens produktu, wartość i kierunek,
+- `02-roadmap.md` ma opisać kolejny sensowny rozwój produktu,
+- nie próbujemy odtwarzać całej historii 1:1,
+- nie zamieniamy dokumentów produktowych w opis wnętrza systemu.
 
 ## Format nagłówka dokumentu
 
@@ -104,7 +123,7 @@ Każdy plik w `product/` powinien zaczynać się od krótkiego nagłówka:
 ```md
 Status: draft
 Owner: Rafał
-Last updated: 2026-04-08
+Last updated: 2026-04-09
 ```
 
 Dozwolone statusy:
@@ -113,8 +132,3 @@ Dozwolone statusy:
 - `review`
 - `approved`
 - `obsolete`
-
-## Zasada jakości
-
-Dokumenty w `product/` mają być użyteczne do podejmowania decyzji.
-Jeżeli dokument jest zbyt ogólny, zbyt długi albo nie pozwala ustalić priorytetów, wymaga poprawy.

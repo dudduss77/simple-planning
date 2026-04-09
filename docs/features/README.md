@@ -119,13 +119,17 @@ Dokumenty w folderze feature'a nie mogą:
 
 `03-product-spec.md` musi zawierać:
 - cel funkcjonalności,
-- użytkownika lub użytkowników funkcjonalności,
+- użytkownika lub użytkowników,
 - zakres funkcjonalny,
-- główne flow działania,
+- główne flow,
 - zasady działania,
 - edge case'y,
 - ograniczenia,
 - out of scope.
+
+W trybie bootstrap plik może dodatkowo rozdzielać:
+- obecne zachowanie,
+- docelowe zachowanie.
 
 ### Plik nie może zawierać
 
@@ -151,14 +155,23 @@ Dokumenty w folderze feature'a nie mogą:
 
 `04-mvp.md` definiuje minimalny zakres pierwszej sensownej wersji funkcjonalności.
 
+W trybie bootstrap dopuszczalne są dwa warianty:
+- `MVP planowane`,
+- `MVP dostarczone`.
+
 ### Plik musi zawierać
 
 `04-mvp.md` musi zawierać:
-- listę elementów wchodzących do MVP,
-- listę elementów niewchodzących do MVP,
-- listę elementów odkładanych na później,
-- krótkie uzasadnienie cięcia zakresu,
+- elementy wchodzące do MVP,
+- elementy niewchodzące do MVP,
+- elementy odłożone na później,
+- uzasadnienie cięcia zakresu,
 - jasne granice MVP.
+
+Jeśli MVP już istnieje, plik powinien dodatkowo wskazać:
+- co zostało dostarczone,
+- czego nadal brakuje,
+- jaki jest kolejny sensowny krok.
 
 ### Plik nie może zawierać
 
@@ -224,7 +237,9 @@ Dokumenty w folderze feature'a nie mogą:
 - kolejność lub zależności między zadaniami,
 - zadania małe i możliwe do odhaczenia,
 - zadania odnoszące się do MVP i tech specu,
-- jasny zakres każdego zadania.
+- jasny zakres każdego zadania,
+- wynik końcowy każdego zadania,
+- typ każdego zadania: `new`, `refactor`, `test`, `docs`, `infra`.
 
 ### Plik nie może zawierać
 
@@ -363,12 +378,16 @@ Jeżeli funkcjonalność już istnieje:
 - można utworzyć dokumenty retroaktywnie,
 - `01-idea.md` opisuje pierwotny lub obecny cel funkcjonalności,
 - `02-discovery.md` identyfikuje luki, ryzyka i niespójności względem kodu,
-- `03-product-spec.md` opisuje aktualne lub docelowe zachowanie,
+- `03-product-spec.md` opisuje obecne zachowanie, docelowe zachowanie albo różnicę między nimi,
+- `04-mvp.md` może działać w trybie `MVP planowane` albo `MVP dostarczone`,
 - `05-tech-spec.md` musi odnosić się do istniejącej implementacji,
-- `06-tasks.md` może zawierać także refaktor, integrację i porządkowanie obecnego rozwiązania.
+- `06-tasks.md` może zawierać także refaktor, integrację, migrację i porządkowanie obecnego rozwiązania.
 
-W trybie bootstrap nie rekonstruujemy całej historii zmian.
-Opisujemy aktualny stan i kolejny sensowny krok.
+W trybie bootstrap:
+- nie rekonstruujemy całej historii zmian,
+- opisujemy aktualny stan,
+- opisujemy luki,
+- opisujemy kolejny sensowny krok.
 
 ## Format nagłówka dokumentu
 
