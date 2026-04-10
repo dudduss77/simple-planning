@@ -71,10 +71,18 @@ Jeśli projekt jest w trybie bootstrap, oznaczaj tylko elementy istotne dla tej 
 - `do weryfikacji`
 - `do usunięcia`
 
+Znaczenie statusów:
+- `istnieje` — element już działa i nie wymaga zmiany, ale jest istotny dla zrozumienia rozwiązania,
+- `do zmiany` — element istnieje i musi zostać zmodyfikowany,
+- `do dodania` — element nie istnieje i musi zostać wprowadzony,
+- `do weryfikacji` — element zależy od zmiany i musi zostać sprawdzony pod kątem zgodności, nawet jeśli może nie wymagać modyfikacji,
+- `do usunięcia` — element po wdrożeniu zmiany przestaje mieć sens, staje się martwy albo koliduje z docelowym rozwiązaniem.
+
 Jeśli kod już istnieje:
 - dopasuj specyfikację do aktualnej architektury,
 - wskaż wymagane zmiany,
 - wskaż konkretne pliki, moduły i kontrakty dotknięte zmianą,
+- wskaż elementy do weryfikacji i do usunięcia, jeśli wynikają bezpośrednio z zakresu zmiany,
 - nie opisuj szeroko obszarów niezwiązanych z MVP.
 
 Jeśli zmiana dotyczy tylko części systemu:
