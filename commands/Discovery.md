@@ -58,10 +58,27 @@ Jeśli funkcjonalność już istnieje w kodzie, uwzględnij obecne zachowanie i 
 - co wymaga decyzji,
 - jakie są rozjazdy między ideą a stanem obecnym.
 
+Jeśli temat jest szeroki, zanim zadasz pytania:
+- najpierw wypisz 3-6 głównych obszarów decyzji,
+- potem zadawaj pytania przypisane do tych obszarów,
+- nie mieszaj pytań z różnych obszarów bez oznaczenia kontekstu.
+
 Jeśli użyto researchu zewnętrznego:
 - odnotuj tylko wnioski istotne dla discovery,
 - zaznacz ograniczenia i ryzyka wynikające z researchu,
 - nie zamieniaj discovery w notatkę z researchu.
+
+Jeśli musisz zadać pytania:
+- zadawaj tylko pytania, które realnie wpływają na wynik `02-discovery.md`,
+- grupuj je w małe partie, maksymalnie 3-5 naraz,
+- przy każdym pytaniu podaj jedno krótkie zdanie kontekstu:
+  - czego dotyczy,
+  - po co to pytanie,
+  - co zmieni odpowiedź.
+- oznacz pytania jako:
+  - `blokujące` — bez odpowiedzi nie da się sensownie domknąć discovery,
+  - `doprecyzowujące` — poprawiają jakość discovery, ale nie blokują przejścia dalej.
+- nie zadawaj pytań, jeśli odpowiedź można wiarygodnie ustalić z kodu, dokumentów albo researchu.
 
 Preferowany styl:
 - krótkie sekcje,
