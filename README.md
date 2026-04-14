@@ -20,10 +20,9 @@ Docelowy sposób użycia workflow to CLI:
 
 1. Zainstaluj pakiet w projekcie.
 2. Uruchom `simple-planning init`.
-3. Korzystaj z obowiązkowej komendy `.cursor/commands/use-simple-planning.md`.
-4. Do jawnego przechodzenia przez checkpointy używaj `.cursor/commands/continue-simple-planning.md`.
-5. Pozwól agentowi sterować kolejnymi etapami przez `simple-planning status`, `next`, `idea` i `run`.
-6. CLI zwraca też pełny prompt tekstowy dla etapu oraz referencję, np. `@.simple-planning/commands/Discovery.md`, żeby agent nie musiał dodatkowo czytać pliku, ale użytkownik nadal widział źródło instrukcji.
+3. Używaj małych komend Cursor: `.cursor/commands/start-feature.md`, `.cursor/commands/work-on-current-step.md`, `.cursor/commands/continue-feature.md` i `.cursor/commands/feature-status.md`.
+4. Pozwól agentowi sterować kolejnymi etapami przez `simple-planning start`, `work-on-current-step`, `continue`, `status`, `idea` i `run`.
+5. CLI zwraca też pełny prompt tekstowy dla etapu oraz referencję, np. `@.simple-planning/commands/Discovery.md`, żeby agent nie musiał dodatkowo czytać pliku, ale użytkownik nadal widział źródło instrukcji.
 
 W repo źródłowym foldery `commands/` i `planning/` pozostają źródłem reguł oraz szablonów używanych przez CLI. Po `simple-planning init` projekt dostaje własny folder `.simple-planning/commands/`, więc lokalne zmiany promptów są respektowane i nie są hardcoded w kodzie.
 
@@ -212,8 +211,8 @@ Preferowany styl:
 ## Jak zacząć nową funkcjonalność
 
 1. Uruchom `simple-planning init`.
-2. Utwórz nowy feature przez `simple-planning idea --name <feature-name> --description "<opis>"`.
-3. Pozwól agentowi uruchomić `simple-planning run discovery --feature <slug>`.
+2. Utwórz nowy feature przez `simple-planning start --name <feature-name> --description "<opis>"`.
+3. Pozwól agentowi zredagować przygotowany przez CLI etap `discovery`.
 4. Po każdym etapie od `discovery` dalej zatrzymaj się, przejrzyj dokument i dopiero wtedy każ agentowi iść dalej.
 5. Nie przechodź do `05-tech-spec`, jeśli nie ma jeszcze sensownego `03-product-spec.md` i `04-mvp.md`.
 

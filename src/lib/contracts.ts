@@ -16,6 +16,7 @@ export type SideStep = (typeof sideSteps)[number];
 export type Step = (typeof allSteps)[number];
 export type AgentAction =
   | "initialize_project"
+  | "choose_feature"
   | "show_status"
   | "show_next_step"
   | "prepare_next_step"
@@ -50,6 +51,7 @@ export interface FeatureSummary {
   name: string;
   slug: string;
   status: "active";
+  activeStep: Step | null;
   lastCompletedStep: Step | null;
   nextSuggestedStep: MainStep | null;
   awaitingUserConfirmation: boolean;
@@ -106,28 +108,59 @@ export interface SourceContext {
   prompt: PromptContext;
 }
 
-export interface PrepareResultData {
+export interface FeatureWorkflowState {
   featureId: string;
+  featureName: string;
   featureSlug: string;
+  activeStep: Step | null;
+  lastCompletedStep: Step | null;
+  nextSuggestedStep: MainStep | null;
+  awaitingUserConfirmation: boolean;
+  awaitingAfterStep: Step | null;
+}
+
+export interface WorkflowPreparation {
   step: Step;
   targetDocument: TargetDocument;
-  sourceContext: SourceContext;
-  targetFile: string;
   requiredFiles: string[];
-  commandGuidePath: string | null;
-  commandGuideRef: string | null;
-  commandGuideText: string | null;
+  prompt: PromptContext;
   nextCommand: string;
   confirmedByUser: boolean;
 }
 
-export interface StepCompletionData {
-  featureId: string;
-  featureSlug: string;
+export interface FeatureSelectionData {
+  selectionRequired: true;
+  selectionReason: string;
+  suggestedCommand: string;
+  availableFeatures: FeatureSummary[];
+}
+
+export interface PrepareResultData extends FeatureWorkflowState {
+  step: Step;
+  preparation: WorkflowPreparation;
+}
+
+export interface StartResultData extends FeatureWorkflowState {
+  createdFeature: true;
+  featureDirectory: string;
+  ideaFile: string;
+  preparation: WorkflowPreparation;
+}
+
+export interface ContinueResultData extends PrepareResultData {
+  resumedFromCheckpoint: boolean;
+}
+
+export interface StatusResultData extends FeatureWorkflowState {
+  documents: Record<Step, DocumentRecord>;
+  nextContext: {
+    nextStep: MainStep | null;
+    prompt: PromptContext;
+  };
+}
+
+export interface StepCompletionData extends FeatureWorkflowState {
   completedStep: Step;
-  awaitingUserConfirmation: boolean;
-  awaitingAfterStep: Step | null;
-  nextSuggestedStep: MainStep | null;
   nextContext: {
     nextStep: MainStep | null;
     prompt: PromptContext;

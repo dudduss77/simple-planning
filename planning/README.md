@@ -20,8 +20,8 @@ W docelowym użyciu agent nie powinien polegać na ręcznym dołączaniu plików
 
 Zamiast tego:
 1. projekt jest inicjalizowany przez `simple-planning init`,
-2. feature powstaje przez `simple-planning idea --name ... --description ...`,
-3. kolejne etapy są prowadzone przez `simple-planning next` i `simple-planning run <step>`,
+2. nowy feature powstaje przez `simple-planning start --name ... --description ...`,
+3. kolejne etapy są prowadzone przede wszystkim przez `simple-planning continue`, `status` i `run <step>`,
 4. po każdym etapie od `discovery` dalej agent ma się zatrzymać i poprosić użytkownika o dalsze instrukcje.
 
 ## Struktura repo
@@ -209,8 +209,8 @@ Preferowany styl:
 ## Jak zacząć nową funkcjonalność
 
 1. Uruchom `simple-planning init`.
-2. Utwórz feature przez `simple-planning idea --name <feature-name> --description "<opis>"`.
-3. Pozwól agentowi wykonać `discovery` przez CLI.
+2. Utwórz feature przez `simple-planning start --name <feature-name> --description "<opis>"`.
+3. Pozwól agentowi wykonać przygotowany przez CLI etap `discovery`.
 4. Przechodź do kolejnych etapów dopiero po jawnej decyzji użytkownika.
 5. Nie zaczynaj od `05-tech-spec.md`, jeśli nie ma jeszcze sensownego `03-product-spec.md` i `04-mvp.md`.
 

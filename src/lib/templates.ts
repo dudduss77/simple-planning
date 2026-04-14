@@ -119,14 +119,28 @@ export function createProductRoadmapTemplate(owner?: string): string {
   );
 }
 
-export function buildCursorCommandTemplate(packageCommand = "npx simple-planning"): string {
-  return `# Użyj Simple Planning\n\nUżywaj tej komendy zawsze wtedy, gdy użytkownik chce tworzyć, przeglądać albo porządkować dokumenty zarządzane przez Simple Planning.\n\n## Zasady\n- Zawsze zacznij od sprawdzenia stanu projektu przez \`${packageCommand} status\` albo \`${packageCommand} list\`.\n- Preferuj \`${packageCommand} next --feature <slug-or-id>\`, aby ustalić kolejny legalny główny etap.\n- Użyj \`${packageCommand} run <step> --feature <slug-or-id>\` przed edycją dokumentu, aby CLI zwróciło wymagane pliki oraz pełny prompt etapu.\n- Po zaktualizowaniu pliku docelowego wywołaj \`${packageCommand} run <step> --feature <slug-or-id> --complete\`.\n- Jeśli CLI zwróci \`Zatrzymaj się i poproś użytkownika o dalsze instrukcje.\`, zatrzymaj się i zapytaj użytkownika.\n- Nie przechodź do kolejnego głównego etapu tylko na podstawie luźnej odpowiedzi użytkownika. Użyj dedykowanej komendy Cursor \`continue-simple-planning\`.\n- Możesz aktualizować \`decision-log\` albo \`parking-lot\` podczas innego etapu tylko wtedy, gdy użytkownik wyraźnie o to poprosi.\n- Nie polegaj na pamięci, żeby ustalić, które pliki są potrzebne. Za każdym razem pytaj CLI.\n`;
-}
-
-export function buildContinueCursorCommandTemplate(
+export function buildStartFeatureCursorCommandTemplate(
   packageCommand = "npx simple-planning",
 ): string {
-  return `# Kontynuuj Simple Planning\n\nUżywaj tej komendy tylko wtedy, gdy użytkownik chce jawnie przejść dalej po checkpointcie Simple Planning.\n\n## Zasady\n- Zacznij od sprawdzenia stanu projektu przez \`${packageCommand} status\` albo \`${packageCommand} next\`.\n- Jeśli istnieje kilka feature'ów i nie wiadomo, który ma być kontynuowany, zapytaj użytkownika.\n- Jeśli bieżący feature nie czeka na potwierdzenie, nie wymyślaj kontynuacji. Wyjaśnij aktualny stan.\n- Jeśli feature czeka na potwierdzenie i \`nextSuggestedStep\` istnieje, uruchom \`${packageCommand} run <next-step> --feature <slug-or-id> --confirmed-by-user\`.\n- Jedynym celem tej komendy jest odblokowanie dokładnie jednego następnego kroku po checkpointcie.\n- Po przygotowaniu tego kroku wróć do normalnego flow przez \`use-simple-planning\`.\n`;
+  return `# Start Feature\n\nUżywaj tej komendy tylko wtedy, gdy użytkownik chce rozpocząć nowy feature w Simple Planning.\n\n## Zasady\n- Jeśli nazwa feature'a nie jest jednoznaczna, zapytaj użytkownika o nazwę.\n- Jeśli opis jest zbyt krótki albo nie istnieje, poproś o krótki opis do \`01-idea.md\`.\n- Uruchom \`${packageCommand} start --name <feature-name> --description "<opis>"\`.\n- CLI samo ma utworzyć feature, \`01-idea.md\` i przygotować \`discovery\`.\n- Użyj tylko \`preparation.targetDocument\`, \`preparation.requiredFiles\` i \`preparation.prompt\` zwróconych przez CLI.\n- Po zaktualizowaniu pliku docelowego wywołaj \`preparation.nextCommand\` zwrócone przez CLI.\n- Jeśli CLI zwróci konieczność zatrzymania albo doprecyzowania, zatrzymaj się i zapytaj użytkownika.\n`;
+}
+
+export function buildContinueFeatureCursorCommandTemplate(
+  packageCommand = "npx simple-planning",
+): string {
+  return `# Continue Feature\n\nUżywaj tej komendy wtedy, gdy użytkownik chce kontynuować dokładnie jeden legalny krok dla istniejącego feature'a.\n\n## Zasady\n- Uruchom \`${packageCommand} continue [--feature <slug|id>]\`.\n- Jeśli CLI zwróci wybór feature'a, zapytaj użytkownika zamiast zgadywać.\n- Jeśli CLI wznowi aktywny etap albo odblokuje krok po checkpointcie, wykonaj dokładnie ten krok i nic więcej.\n- Użyj tylko \`preparation.targetDocument\`, \`preparation.requiredFiles\` i \`preparation.prompt\` zwróconych przez CLI.\n- Po zaktualizowaniu pliku docelowego wywołaj \`preparation.nextCommand\` zwrócone przez CLI.\n- Nie przechodź sam do kolejnego etapu poza tym, co zwrócił CLI.\n`;
+}
+
+export function buildWorkOnCurrentStepCursorCommandTemplate(
+  packageCommand = "npx simple-planning",
+): string {
+  return `# Work On Current Step\n\nUżywaj tej komendy wtedy, gdy użytkownik chce dalej pracować nad aktualnym dokumentem bez przechodzenia do kolejnego kroku workflow.\n\n## Zasady\n- Uruchom \`${packageCommand} work-on-current-step [--feature <slug|id>]\`.\n- Ta komenda ma wznowić tylko \`activeStep\` i nie może samodzielnie przygotować następnego etapu.\n- Jeśli CLI zwróci wybór feature'a, zapytaj użytkownika zamiast zgadywać.\n- Jeśli CLI poinformuje, że nie ma aktywnego kroku, zatrzymaj się i wskaż użytkownikowi \`continue-feature\` albo \`feature-status\`.\n- Użyj tylko \`preparation.targetDocument\`, \`preparation.requiredFiles\` i \`preparation.prompt\` zwróconych przez CLI.\n- Po zaktualizowaniu pliku docelowego wywołaj \`preparation.nextCommand\` zwrócone przez CLI tylko po to, by oznaczyć bieżący krok jako ukończony.\n- Nie przechodź dalej tylko dlatego, że dokument jest już otwarty albo użytkownik dopisał nowe informacje.\n`;
+}
+
+export function buildFeatureStatusCursorCommandTemplate(
+  packageCommand = "npx simple-planning",
+): string {
+  return `# Feature Status\n\nUżywaj tej komendy, gdy użytkownik chce tylko sprawdzić stan feature'a albo ustalić następny legalny krok.\n\n## Zasady\n- Uruchom \`${packageCommand} status [--feature <slug|id>]\`.\n- Jeśli CLI zwróci wybór feature'a, zapytaj użytkownika zamiast zgadywać.\n- Jeśli CLI zwróci \`nextContext\`, użyj tego tylko do raportowania stanu, a nie do samodzielnego przechodzenia dalej.\n- Ta komenda nie służy do redagowania dokumentów ani do odblokowywania checkpointów.\n`;
 }
 
 export function getFeatureDocumentPaths(featureDir: string): Record<Step, string> {

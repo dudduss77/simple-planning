@@ -5,6 +5,7 @@ import {
   type DocumentRecord,
   type FeatureState,
   type FeatureSummary,
+  type FeatureWorkflowState,
   type ProjectIndex,
   type Step,
 } from "./contracts.js";
@@ -138,6 +139,7 @@ export async function syncFeatureSummary(
     name: state.name,
     slug: state.slug,
     status: state.status,
+    activeStep: state.activeStep,
     lastCompletedStep: state.lastCompletedStep,
     nextSuggestedStep: state.nextSuggestedStep,
     awaitingUserConfirmation: state.awaitingUserConfirmation,
@@ -157,37 +159,187 @@ export async function syncFeatureSummary(
   await saveProjectIndex(cwd, index);
 }
 
+export function summarizeFeatureState(state: FeatureState): FeatureWorkflowState {
+  return {
+    featureId: state.featureId,
+    featureName: state.name,
+    featureSlug: state.slug,
+    activeStep: state.activeStep,
+    lastCompletedStep: state.lastCompletedStep,
+    nextSuggestedStep: state.nextSuggestedStep,
+    awaitingUserConfirmation: state.awaitingUserConfirmation,
+    awaitingAfterStep: state.awaitingAfterStep,
+  };
+}
+
+export type FeatureSelectionResolution =
+  | { kind: "resolved"; feature: FeatureSummary }
+  | { kind: "empty" }
+  | { kind: "missing"; featureRef: string; features: FeatureSummary[] }
+  | { kind: "ambiguous"; reason: string; features: FeatureSummary[] };
+
+function sortFeatureSummaries(features: FeatureSummary[]): FeatureSummary[] {
+  return [...features].sort((left, right) =>
+    right.updatedAt.localeCompare(left.updatedAt),
+  );
+}
+
+export async function resolveFeatureSelection(
+  cwd: string,
+  featureRef?: string,
+): Promise<FeatureSelectionResolution> {
+  const index = await ensureProjectIndex(cwd);
+  const features = sortFeatureSummaries(index.features);
+
+  if (featureRef) {
+    const matched = features.find(
+      (feature) =>
+        feature.featureId === featureRef ||
+        feature.slug === featureRef ||
+        feature.name === featureRef,
+    );
+
+    if (!matched) {
+      return {
+        kind: "missing",
+        featureRef,
+        features,
+      };
+    }
+
+    return {
+      kind: "resolved",
+      feature: matched,
+    };
+  }
+
+  if (features.length === 0) {
+    return { kind: "empty" };
+  }
+
+  if (features.length === 1) {
+    return {
+      kind: "resolved",
+      feature: features[0],
+    };
+  }
+
+  const awaitingConfirmation = features.filter(
+    (feature) => feature.awaitingUserConfirmation,
+  );
+  if (awaitingConfirmation.length === 1) {
+    return {
+      kind: "resolved",
+      feature: awaitingConfirmation[0],
+    };
+  }
+
+  const activeStepFeatures = features.filter((feature) => feature.activeStep !== null);
+  if (activeStepFeatures.length === 1) {
+    return {
+      kind: "resolved",
+      feature: activeStepFeatures[0],
+    };
+  }
+
+  return {
+    kind: "ambiguous",
+    reason:
+      "Istnieje kilka aktywnych feature'ów i nie da się jednoznacznie wybrać właściwego bez decyzji użytkownika.",
+    features,
+  };
+}
+
+export async function resolveActiveStepFeatureSelection(
+  cwd: string,
+  featureRef?: string,
+): Promise<FeatureSelectionResolution> {
+  const index = await ensureProjectIndex(cwd);
+  const features = sortFeatureSummaries(index.features);
+
+  if (featureRef) {
+    const matched = features.find(
+      (feature) =>
+        feature.featureId === featureRef ||
+        feature.slug === featureRef ||
+        feature.name === featureRef,
+    );
+
+    if (!matched) {
+      return {
+        kind: "missing",
+        featureRef,
+        features,
+      };
+    }
+
+    return {
+      kind: "resolved",
+      feature: matched,
+    };
+  }
+
+  if (features.length === 0) {
+    return { kind: "empty" };
+  }
+
+  const activeStepFeatures = features.filter((feature) => feature.activeStep !== null);
+  if (activeStepFeatures.length === 1) {
+    return {
+      kind: "resolved",
+      feature: activeStepFeatures[0],
+    };
+  }
+
+  if (activeStepFeatures.length > 1) {
+    return {
+      kind: "ambiguous",
+      reason:
+        "Istnieje kilka feature'ów z aktywnym krokiem. Wskaż, nad którym mam dalej pracować.",
+      features: activeStepFeatures,
+    };
+  }
+
+  if (features.length === 1) {
+    return {
+      kind: "resolved",
+      feature: features[0],
+    };
+  }
+
+  return {
+    kind: "ambiguous",
+    reason:
+      "Nie ma jednoznacznego aktywnego kroku do wznowienia. Wskaż feature albo użyj komendy kontynuacji workflow.",
+    features,
+  };
+}
+
 export async function loadFeatureState(
   cwd: string,
   featureRef?: string,
 ): Promise<FeatureState> {
-  const index = await ensureProjectIndex(cwd);
-
-  if (!featureRef) {
-    if (index.features.length === 1) {
-      featureRef = index.features[0].slug;
-    } else {
-      throw new Error(
-        "Zapytaj użytkownika, nad którym feature'em pracujemy, albo podaj --feature <slug|id>.",
-      );
-    }
+  const resolution = await resolveFeatureSelection(cwd, featureRef);
+  if (resolution.kind === "empty") {
+    throw new Error(
+      "Brak feature'ów w Simple Planning. Jeśli to nowy temat, utwórz go przez 'simple-planning start --name <feature-name> --description <text>' albo 'simple-planning idea --name <feature-name> --description <text>'.",
+    );
   }
 
-  const matched = index.features.find(
-    (feature) =>
-      feature.featureId === featureRef ||
-      feature.slug === featureRef ||
-      feature.name === featureRef,
-  );
-
-  if (!matched) {
+  if (resolution.kind === "missing") {
     throw new Error(
-      `Nie znaleziono feature'a '${featureRef}'. Jeśli to istniejący feature, użyj 'simple-planning list', aby sprawdzić poprawny slug lub id. Jeśli to nowy feature, utwórz go przez 'simple-planning idea --name <feature-name> --description <text>'.`,
+      `Nie znaleziono feature'a '${resolution.featureRef}'. Jeśli to istniejący feature, użyj 'simple-planning list', aby sprawdzić poprawny slug lub id. Jeśli to nowy feature, utwórz go przez 'simple-planning start --name <feature-name> --description <text>' albo 'simple-planning idea --name <feature-name> --description <text>'.`,
+    );
+  }
+
+  if (resolution.kind === "ambiguous") {
+    throw new Error(
+      "Zapytaj użytkownika, nad którym feature'em pracujemy, albo podaj --feature <slug|id>.",
     );
   }
 
   const state = await readJsonFile<FeatureState>(
-    getFeatureStatePath(cwd, matched.featureId),
+    getFeatureStatePath(cwd, resolution.feature.featureId),
   );
   await refreshFeatureDocuments(state);
   return state;

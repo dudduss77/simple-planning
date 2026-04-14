@@ -1,10 +1,13 @@
 #!/usr/bin/env node
+import { runContinueCommand } from "./commands/continue.js";
 import { runIdeaCommand } from "./commands/idea.js";
 import { runInitCommand } from "./commands/init.js";
 import { runListCommand } from "./commands/list.js";
 import { runNextCommand } from "./commands/next.js";
 import { runStepCommand } from "./commands/run.js";
+import { runStartCommand } from "./commands/start.js";
 import { runStatusCommand } from "./commands/status.js";
+import { runWorkOnCurrentStepCommand } from "./commands/work-on-current-step.js";
 import {
   booleanFlag,
   optionalStringFlag,
@@ -19,6 +22,9 @@ function printHelp(): void {
 
 Commands:
   init
+  start --name <feature-name> --description <text>
+  continue [--feature <slug|id>]
+  work-on-current-step [--feature <slug|id>]
   idea --name <feature-name> --description <text>
   list
   status [--feature <slug|id>]
@@ -41,6 +47,40 @@ async function main(): Promise<void> {
     switch (command) {
       case "init": {
         printResult(await runInitCommand(process.cwd()));
+        return;
+      }
+      case "start": {
+        const name = requireStringFlag(
+          parsed.flags,
+          "name",
+          "Zapytaj użytkownika o nazwę feature'a, chyba że wynika ona z kontekstu zadania, wtedy podaj ją jawnie w --name.",
+        );
+        const description = requireStringFlag(
+          parsed.flags,
+          "description",
+          "Podaj opis idei w --description, aby można było utworzyć feature i przygotować discovery.",
+        );
+        printResult(
+          await runStartCommand({ cwd: process.cwd(), name, description }),
+        );
+        return;
+      }
+      case "continue": {
+        printResult(
+          await runContinueCommand({
+            cwd: process.cwd(),
+            feature: optionalStringFlag(parsed.flags, "feature"),
+          }),
+        );
+        return;
+      }
+      case "work-on-current-step": {
+        printResult(
+          await runWorkOnCurrentStepCommand({
+            cwd: process.cwd(),
+            feature: optionalStringFlag(parsed.flags, "feature"),
+          }),
+        );
         return;
       }
       case "idea": {

@@ -27,6 +27,14 @@ function runCli(cwd, args) {
   };
 }
 
+async function writeMeaningfulDoc(filePath, title, section = "Treść") {
+  await fs.writeFile(
+    filePath,
+    `Status: draft\nOwner: test\nLast updated: 2026-04-13\n\n# ${title}\n\n## ${section}\n- Konkret\n`,
+    "utf8",
+  );
+}
+
 test("init creates project skeleton and cursor command", async () => {
   const cwd = await createTempWorkspace();
 
@@ -40,12 +48,16 @@ test("init creates project skeleton and cursor command", async () => {
     fs.access(path.join(cwd, ".simple-planning", "state", "index.json")),
   );
   await assert.doesNotReject(() =>
-    fs.access(path.join(cwd, ".cursor", "commands", "use-simple-planning.md")),
+    fs.access(path.join(cwd, ".cursor", "commands", "start-feature.md")),
   );
   await assert.doesNotReject(() =>
-    fs.access(
-      path.join(cwd, ".cursor", "commands", "continue-simple-planning.md"),
-    ),
+    fs.access(path.join(cwd, ".cursor", "commands", "continue-feature.md")),
+  );
+  await assert.doesNotReject(() =>
+    fs.access(path.join(cwd, ".cursor", "commands", "work-on-current-step.md")),
+  );
+  await assert.doesNotReject(() =>
+    fs.access(path.join(cwd, ".cursor", "commands", "feature-status.md")),
   );
   await assert.doesNotReject(() =>
     fs.access(
@@ -54,28 +66,36 @@ test("init creates project skeleton and cursor command", async () => {
   );
 });
 
-test("init copies cursor command with explicit new feature guidance", async () => {
+test("init copies dedicated cursor commands", async () => {
   const cwd = await createTempWorkspace();
 
   const initResult = runCli(cwd, ["init"]);
   assert.equal(initResult.status, 0);
 
-  const commandText = await fs.readFile(
-    path.join(cwd, ".cursor", "commands", "use-simple-planning.md"),
+  const startCommandText = await fs.readFile(
+    path.join(cwd, ".cursor", "commands", "start-feature.md"),
+    "utf8",
+  );
+  const continueCommandText = await fs.readFile(
+    path.join(cwd, ".cursor", "commands", "continue-feature.md"),
+    "utf8",
+  );
+  const workCommandText = await fs.readFile(
+    path.join(cwd, ".cursor", "commands", "work-on-current-step.md"),
+    "utf8",
+  );
+  const statusCommandText = await fs.readFile(
+    path.join(cwd, ".cursor", "commands", "feature-status.md"),
     "utf8",
   );
 
-  assert.match(
-    commandText,
-    /Jeśli użytkownik opisuje nowy feature albo potwierdza, że chodzi o nowy feature/,
-  );
-  assert.match(
-    commandText,
-    /simple-planning idea --name <feature-name> --description/,
-  );
+  assert.match(startCommandText, /npx simple-planning start --name <feature-name>/);
+  assert.match(continueCommandText, /npx simple-planning continue \[--feature <slug\|id>\]/);
+  assert.match(workCommandText, /npx simple-planning work-on-current-step \[--feature <slug\|id>\]/);
+  assert.match(statusCommandText, /npx simple-planning status \[--feature <slug\|id>\]/);
 });
 
-test("list suggests idea command when project has no features", async () => {
+test("list suggests start command when project has no features", async () => {
   const cwd = await createTempWorkspace();
 
   runCli(cwd, ["init"]);
@@ -90,11 +110,15 @@ test("list suggests idea command when project has no features", async () => {
   );
   assert.match(
     listResult.parsed.message,
+    /simple-planning start --name <feature-name> --description <text>/,
+  );
+  assert.match(
+    listResult.parsed.message,
     /simple-planning idea --name <feature-name> --description <text>/,
   );
 });
 
-test("missing feature error suggests list for existing and idea for new feature", async () => {
+test("missing feature status suggests list for existing and start for new feature", async () => {
   const cwd = await createTempWorkspace();
 
   runCli(cwd, ["init"]);
@@ -104,7 +128,7 @@ test("missing feature error suggests list for existing and idea for new feature"
     "result-presentation",
   ]);
 
-  assert.equal(statusResult.status, 1);
+  assert.equal(statusResult.status, 0);
   assert.equal(statusResult.parsed.ok, false);
   assert.match(
     statusResult.parsed.message,
@@ -116,54 +140,113 @@ test("missing feature error suggests list for existing and idea for new feature"
   );
   assert.match(
     statusResult.parsed.message,
-    /Jeśli to nowy feature, utwórz go przez 'simple-planning idea --name <feature-name> --description <text>'\./,
+    /Jeśli to nowy feature, uruchom 'simple-planning start --name <feature-name> --description <text>'\./,
   );
 });
 
-test("discovery completion blocks next step until user confirmation", async () => {
+test("start creates feature and prepares discovery immediately", async () => {
   const cwd = await createTempWorkspace();
 
   runCli(cwd, ["init"]);
-  const ideaResult = runCli(cwd, [
-    "idea",
+  const startResult = runCli(cwd, [
+    "start",
     "--name",
     "Feature Alpha",
     "--description",
     "Opis idei.",
   ]);
-  assert.equal(ideaResult.status, 0);
-  assert.equal(ideaResult.parsed.agentAction, "prepare_next_step");
-  assert.equal(ideaResult.parsed.stopReason, "none");
+  assert.equal(startResult.status, 0);
+  assert.equal(startResult.parsed.agentAction, "write_document");
+  assert.equal(startResult.parsed.stopReason, "none");
+  assert.equal(startResult.parsed.data.createdFeature, true);
+  assert.equal(startResult.parsed.data.preparation.step, "discovery");
   assert.equal(
-    ideaResult.parsed.data.nextPromptRef,
+    startResult.parsed.data.preparation.prompt.ref,
     "@.simple-planning/commands/Discovery.md",
   );
-  assert.match(ideaResult.parsed.data.nextPromptText, /# Discovery/);
-  assert.equal(ideaResult.parsed.data.nextContext.nextStep, "discovery");
-
-  const prepareDiscovery = runCli(cwd, [
-    "run",
+  assert.match(startResult.parsed.data.preparation.prompt.text, /# Discovery/);
+  assert.equal(
+    startResult.parsed.data.preparation.targetDocument.step,
     "discovery",
-    "--feature",
-    "feature-alpha",
+  );
+  assert.deepEqual(startResult.parsed.data.preparation.requiredFiles, [
+    path.join(
+      cwd,
+      ".simple-planning",
+      "planning",
+      "features",
+      "feature-alpha",
+      "01-idea.md",
+    ),
   ]);
-  assert.equal(prepareDiscovery.status, 0);
-  assert.equal(prepareDiscovery.parsed.agentAction, "write_document");
-  assert.equal(prepareDiscovery.parsed.stopReason, "none");
-  assert.equal(prepareDiscovery.parsed.data.step, "discovery");
+});
+
+test("continue asks user when multiple active features are possible", async () => {
+  const cwd = await createTempWorkspace();
+
+  runCli(cwd, ["init"]);
+  runCli(cwd, [
+    "start",
+    "--name",
+    "Feature Alpha",
+    "--description",
+    "Opis idei.",
+  ]);
+  runCli(cwd, [
+    "start",
+    "--name",
+    "Feature Beta",
+    "--description",
+    "Drugi opis idei.",
+  ]);
+
+  const continueResult = runCli(cwd, ["continue"]);
+  assert.equal(continueResult.status, 0);
+  assert.equal(continueResult.parsed.ok, true);
+  assert.equal(continueResult.parsed.agentAction, "choose_feature");
+  assert.equal(continueResult.parsed.data.selectionRequired, true);
+  assert.equal(continueResult.parsed.data.availableFeatures.length, 2);
+  assert.match(
+    continueResult.parsed.data.suggestedCommand,
+    /simple-planning continue --feature <slug\|id>/,
+  );
+});
+
+test("work-on-current-step resumes only the active step", async () => {
+  const cwd = await createTempWorkspace();
+
+  runCli(cwd, ["init"]);
+  runCli(cwd, [
+    "start",
+    "--name",
+    "Feature Alpha",
+    "--description",
+    "Opis idei.",
+  ]);
+
+  const workResult = runCli(cwd, ["work-on-current-step"]);
+  assert.equal(workResult.status, 0);
+  assert.equal(workResult.parsed.ok, true);
+  assert.equal(workResult.parsed.agentAction, "write_document");
+  assert.equal(workResult.parsed.data.step, "discovery");
+  assert.equal(workResult.parsed.data.preparation.step, "discovery");
   assert.equal(
-    prepareDiscovery.parsed.data.commandGuideRef,
+    workResult.parsed.data.preparation.prompt.ref,
     "@.simple-planning/commands/Discovery.md",
   );
-  assert.match(prepareDiscovery.parsed.data.commandGuideText, /# Discovery/);
-  assert.equal(
-    prepareDiscovery.parsed.data.targetDocument.step,
-    "discovery",
-  );
-  assert.equal(
-    prepareDiscovery.parsed.data.sourceContext.prompt.ref,
-    "@.simple-planning/commands/Discovery.md",
-  );
+});
+
+test("work-on-current-step stops when there is no active step", async () => {
+  const cwd = await createTempWorkspace();
+
+  runCli(cwd, ["init"]);
+  runCli(cwd, [
+    "start",
+    "--name",
+    "Feature Alpha",
+    "--description",
+    "Opis idei.",
+  ]);
 
   const discoveryFile = path.join(
     cwd,
@@ -173,11 +256,47 @@ test("discovery completion blocks next step until user confirmation", async () =
     "feature-alpha",
     "02-discovery.md",
   );
-  await fs.writeFile(
-    discoveryFile,
-    "Status: draft\nOwner: test\nLast updated: 2026-04-13\n\n# Discovery\n\n## Co już istnieje\n- Konkret\n",
-    "utf8",
+  await writeMeaningfulDoc(discoveryFile, "Discovery", "Co już istnieje");
+  runCli(cwd, [
+    "run",
+    "discovery",
+    "--feature",
+    "feature-alpha",
+    "--complete",
+  ]);
+
+  const workResult = runCli(cwd, ["work-on-current-step", "--feature", "feature-alpha"]);
+  assert.equal(workResult.status, 0);
+  assert.equal(workResult.parsed.ok, true);
+  assert.equal(workResult.parsed.agentAction, "stop_and_ask_user");
+  assert.match(workResult.parsed.message, /nie ma aktywnego kroku do dalszej redakcji/i);
+  assert.match(
+    workResult.parsed.data.suggestedCommands[0],
+    /simple-planning continue --feature feature-alpha/,
   );
+});
+
+test("continue resumes checkpoint for the single feature awaiting confirmation", async () => {
+  const cwd = await createTempWorkspace();
+
+  runCli(cwd, ["init"]);
+  runCli(cwd, [
+    "start",
+    "--name",
+    "Feature Alpha",
+    "--description",
+    "Opis idei.",
+  ]);
+
+  const discoveryFile = path.join(
+    cwd,
+    ".simple-planning",
+    "planning",
+    "features",
+    "feature-alpha",
+    "02-discovery.md",
+  );
+  await writeMeaningfulDoc(discoveryFile, "Discovery", "Co już istnieje");
 
   const completeDiscovery = runCli(cwd, [
     "run",
@@ -197,34 +316,29 @@ test("discovery completion blocks next step until user confirmation", async () =
     "Zatrzymaj się i poproś użytkownika o dalsze instrukcje.",
   );
 
-  const blockedNext = runCli(cwd, [
-    "run",
-    "product-spec",
-    "--feature",
-    "feature-alpha",
+  runCli(cwd, [
+    "start",
+    "--name",
+    "Feature Beta",
+    "--description",
+    "Drugi opis idei.",
   ]);
-  assert.equal(blockedNext.status, 0);
-  assert.equal(blockedNext.parsed.agentAction, "stop_and_ask_user");
-  assert.equal(blockedNext.parsed.stopReason, "awaiting_user_confirmation");
-  assert.equal(
-    blockedNext.parsed.message,
-    "Zatrzymaj się i poproś użytkownika o dalsze instrukcje.",
-  );
 
-  const confirmedNext = runCli(cwd, [
-    "run",
-    "product-spec",
-    "--feature",
-    "feature-alpha",
-    "--confirmed-by-user",
-  ]);
-  assert.equal(confirmedNext.status, 0);
-  assert.equal(confirmedNext.parsed.agentAction, "write_document");
-  assert.equal(confirmedNext.parsed.stopReason, "none");
-  assert.equal(confirmedNext.parsed.data.step, "product-spec");
+  const continueResult = runCli(cwd, ["continue"]);
+  assert.equal(continueResult.status, 0);
+  assert.equal(continueResult.parsed.agentAction, "write_document");
+  assert.equal(continueResult.parsed.stopReason, "none");
+  assert.equal(continueResult.parsed.data.resumedFromCheckpoint, true);
   assert.equal(
-    completeDiscovery.parsed.data.nextPromptRef,
+    continueResult.parsed.data.preparation.step,
+    "product-spec",
+  );
+  assert.equal(
+    continueResult.parsed.data.preparation.prompt.ref,
     "@.simple-planning/commands/ProductSpec.md",
   );
-  assert.match(completeDiscovery.parsed.data.nextPromptText, /# ProductSpec/);
+  assert.match(
+    continueResult.parsed.data.preparation.prompt.text,
+    /# ProductSpec/,
+  );
 });

@@ -1,11 +1,66 @@
-import { type CommandResult } from "../lib/contracts.js";
+import {
+  type CommandResult,
+  type FeatureSelectionData,
+} from "../lib/contracts.js";
 import { getGuideReference, getGuideText, getProjectGuidePath } from "../lib/guides.js";
-import { loadFeatureState, saveFeatureState, syncFeatureSummary } from "../lib/state.js";
+import {
+  loadFeatureState,
+  resolveFeatureSelection,
+  saveFeatureState,
+  summarizeFeatureState,
+  syncFeatureSummary,
+} from "../lib/state.js";
 
 export async function runNextCommand(args: {
   cwd: string;
   feature?: string;
 }): Promise<CommandResult> {
+  const selection = await resolveFeatureSelection(args.cwd, args.feature);
+  if (selection.kind === "empty") {
+    return {
+      ok: true,
+      command: "next",
+      message:
+        "Brak feature'ów w Simple Planning. Jeśli zaczynasz nowy temat, uruchom 'simple-planning start --name <feature-name> --description <text>'.",
+      agentAction: "stop_and_ask_user",
+      stopReason: "none",
+      data: {
+        suggestedCommand:
+          "simple-planning start --name <feature-name> --description <text>",
+      },
+    };
+  }
+
+  if (selection.kind === "missing") {
+    return {
+      ok: false,
+      command: "next",
+      message:
+        `Nie znaleziono feature'a '${selection.featureRef}'. Jeśli to istniejący feature, użyj 'simple-planning list', aby sprawdzić poprawny slug lub id. Jeśli to nowy feature, uruchom 'simple-planning start --name <feature-name> --description <text>'.`,
+      agentAction: "stop_and_ask_user",
+      stopReason: "none",
+    };
+  }
+
+  if (selection.kind === "ambiguous") {
+    const data: FeatureSelectionData = {
+      selectionRequired: true,
+      selectionReason: selection.reason,
+      suggestedCommand: "simple-planning next --feature <slug|id>",
+      availableFeatures: selection.features,
+    };
+
+    return {
+      ok: true,
+      command: "next",
+      message:
+        "Istnieje kilka aktywnych feature'ów. Wskaż, dla którego mam wyznaczyć następny krok.",
+      agentAction: "choose_feature",
+      stopReason: "none",
+      data,
+    };
+  }
+
   const state = await loadFeatureState(args.cwd, args.feature);
   await saveFeatureState(args.cwd, state);
   await syncFeatureSummary(args.cwd, state);
@@ -18,11 +73,7 @@ export async function runNextCommand(args: {
       agentAction: "stop_and_ask_user",
       stopReason: "awaiting_user_confirmation",
       data: {
-        featureId: state.featureId,
-        featureSlug: state.slug,
-        awaitingAfterStep: state.awaitingAfterStep,
-        nextSuggestedStep: state.nextSuggestedStep,
-        awaitingUserConfirmation: true,
+        ...summarizeFeatureState(state),
       },
     };
   }
@@ -46,10 +97,7 @@ export async function runNextCommand(args: {
     agentAction: state.nextSuggestedStep ? "show_next_step" : "pipeline_complete",
     stopReason: state.nextSuggestedStep ? "none" : "pipeline_completed",
     data: {
-      featureId: state.featureId,
-      featureSlug: state.slug,
-      nextSuggestedStep: state.nextSuggestedStep,
-      awaitingUserConfirmation: false,
+      ...summarizeFeatureState(state),
       nextContext: {
         nextStep: state.nextSuggestedStep,
         prompt: {

@@ -26,6 +26,7 @@ import {
   markPrepared,
   saveFeatureState,
   setAwaitingUserConfirmation,
+  summarizeFeatureState,
   syncFeatureSummary,
 } from "../lib/state.js";
 import { createFeatureDocumentTemplate } from "../lib/templates.js";
@@ -59,8 +60,7 @@ export async function runStepCommand(args: {
       agentAction: "stop_and_ask_user",
       stopReason: "awaiting_user_confirmation",
       data: {
-        featureId: state.featureId,
-        featureSlug: state.slug,
+        ...summarizeFeatureState(state),
         awaitingAfterStep: state.awaitingAfterStep,
         requestedStep: step,
         nextSuggestedStep: state.nextSuggestedStep,
@@ -93,28 +93,23 @@ export async function runStepCommand(args: {
     await syncFeatureSummary(args.cwd, state);
 
     const data: PrepareResultData = {
-      featureId: state.featureId,
-      featureSlug: state.slug,
+      ...summarizeFeatureState(state),
       step,
-      targetDocument: {
+      preparation: {
         step,
-        path: targetFile,
-      },
-      sourceContext: {
+        targetDocument: {
+          step,
+          path: targetFile,
+        },
         requiredFiles,
         prompt: {
           path: guideFile,
           ref: guideReference,
           text: guideText,
         },
+        nextCommand: `simple-planning run ${step} --feature ${state.slug} --complete`,
+        confirmedByUser: args.confirmedByUser,
       },
-      targetFile,
-      requiredFiles,
-      commandGuidePath: guideFile,
-      commandGuideRef: guideReference,
-      commandGuideText: guideText,
-      nextCommand: `simple-planning run ${step} --feature ${state.slug} --complete`,
-      confirmedByUser: args.confirmedByUser,
     };
 
     return {
@@ -146,12 +141,8 @@ export async function runStepCommand(args: {
   await syncFeatureSummary(args.cwd, state);
 
   const completionData: StepCompletionData = {
-    featureId: state.featureId,
-    featureSlug: state.slug,
+    ...summarizeFeatureState(state),
     completedStep: step,
-    awaitingUserConfirmation: state.awaitingUserConfirmation,
-    awaitingAfterStep: state.awaitingAfterStep,
-    nextSuggestedStep: state.nextSuggestedStep,
     nextContext: {
       nextStep: state.nextSuggestedStep,
       prompt: {

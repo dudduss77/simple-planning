@@ -16,8 +16,10 @@ import {
 } from "../lib/project-paths.js";
 import { ensureProjectIndex } from "../lib/state.js";
 import {
-  buildContinueCursorCommandTemplate,
-  buildCursorCommandTemplate,
+  buildContinueFeatureCursorCommandTemplate,
+  buildFeatureStatusCursorCommandTemplate,
+  buildStartFeatureCursorCommandTemplate,
+  buildWorkOnCurrentStepCursorCommandTemplate,
   createProductRoadmapTemplate,
   createProductVisionTemplate,
 } from "../lib/templates.js";
@@ -34,12 +36,20 @@ const guideFiles = [
 
 const cursorCommandFiles = [
   {
-    filename: "use-simple-planning.md",
-    fallback: () => buildCursorCommandTemplate(),
+    filename: "start-feature.md",
+    fallback: () => buildStartFeatureCursorCommandTemplate(),
   },
   {
-    filename: "continue-simple-planning.md",
-    fallback: () => buildContinueCursorCommandTemplate(),
+    filename: "continue-feature.md",
+    fallback: () => buildContinueFeatureCursorCommandTemplate(),
+  },
+  {
+    filename: "work-on-current-step.md",
+    fallback: () => buildWorkOnCurrentStepCursorCommandTemplate(),
+  },
+  {
+    filename: "feature-status.md",
+    fallback: () => buildFeatureStatusCursorCommandTemplate(),
   },
 ] as const;
 
