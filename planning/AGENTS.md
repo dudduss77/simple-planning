@@ -17,7 +17,8 @@ Celem repo jest doprowadzenie pomysłu lub istniejącej funkcjonalności do stan
 Repo zawiera trzy główne obszary:
 - `product/` — dokumenty dotyczące całego produktu,
 - `features/` — dokumenty dotyczące pojedynczych funkcjonalności,
-- `.cursor/commands/` — komendy operacyjne sterujące pracą AI.
+- `.cursor/commands/use-simple-planning.md` — obowiązkową komendę wejściową do pracy z CLI,
+- `commands/` — źródłowe reguły etapów używane przez pakiet `simple-planning`.
 
 ## Rola AI
 
@@ -94,11 +95,13 @@ Nie tuszuj sprzeczności przez dopisywanie obejść w kilku miejscach.
 
 ## Tryb pracy
 
-Domyślnym sposobem pracy w tym repo są celowane komendy Cursor.
+Domyślnym sposobem pracy w tym repo są celowane komendy Cursor i CLI `simple-planning`.
 
-Agent ma wykonywać tylko zakres wynikający z uruchomionej komendy.
-Agent nie ma sam przechodzić do kolejnych etapów.
-Agent nie ma aktualizować innych dokumentów niż te wymagane przez bieżące polecenie, chyba że komenda mówi inaczej.
+Agent ma zaczynać od `.cursor/commands/use-simple-planning.md`.
+Agent ma przechodzić przez checkpointy tylko przez `.cursor/commands/continue-simple-planning.md`.
+Agent ma wykonywać tylko zakres wynikający z uruchomionej komendy i odpowiedzi CLI.
+Agent nie ma sam przechodzić do kolejnych etapów bez jawnego użycia komendy kontynuacji.
+Agent nie ma aktualizować innych dokumentów niż te wymagane przez bieżące polecenie, chyba że użytkownik wyraźnie o to poprosi, np. dla `07-decision-log.md` lub `08-parking-lot.md`.
 
 ## Bootstrap istniejącego systemu
 

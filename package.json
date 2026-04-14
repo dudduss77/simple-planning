@@ -1,0 +1,37 @@
+{
+  "name": "simple-planning",
+  "version": "0.1.0",
+  "description": "CLI for orchestrating staged planning documents with AI agents.",
+  "type": "module",
+  "bin": {
+    "simple-planning": "./dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "commands",
+    "planning",
+    ".cursor",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "check": "tsc --noEmit -p tsconfig.json",
+    "clean": "node -e \"import('node:fs/promises').then(fs=>fs.rm('dist',{recursive:true,force:true}))\"",
+    "test": "pnpm build && node --test test/**/*.test.mjs"
+  },
+  "keywords": [
+    "cli",
+    "planning",
+    "cursor",
+    "ai"
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "packageManager": "pnpm@10.21.0",
+  "devDependencies": {
+    "@types/node": "^24.7.2",
+    "typescript": "^5.9.3"
+  }
+}

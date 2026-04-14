@@ -1,6 +1,7 @@
 # Project Docs Workflow
 
 To repo służy do uporządkowanego rozwijania produktu i funkcjonalności z pomocą AI.
+W praktyce te materiały są teraz źródłem dla CLI `simple-planning`, które dostarcza workflow do innych projektów.
 
 Celem nie jest tworzenie „ładnej dokumentacji”, tylko utrzymywanie jednego, spójnego procesu:
 - od pomysłu,
@@ -12,6 +13,16 @@ Celem nie jest tworzenie „ładnej dokumentacji”, tylko utrzymywanie jednego,
 Dokumenty są podzielone na dwa poziomy:
 - `product/` — rzeczy dotyczące całego produktu,
 - `features/` — rzeczy dotyczące konkretnej funkcjonalności.
+
+## Użycie przez CLI
+
+W docelowym użyciu agent nie powinien polegać na ręcznym dołączaniu plików.
+
+Zamiast tego:
+1. projekt jest inicjalizowany przez `simple-planning init`,
+2. feature powstaje przez `simple-planning idea --name ... --description ...`,
+3. kolejne etapy są prowadzone przez `simple-planning next` i `simple-planning run <step>`,
+4. po każdym etapie od `discovery` dalej agent ma się zatrzymać i poprosić użytkownika o dalsze instrukcje.
 
 ## Struktura repo
 
@@ -197,10 +208,10 @@ Preferowany styl:
 
 ## Jak zacząć nową funkcjonalność
 
-1. Utwórz folder `features/<feature-name>/`.
-2. Skopiuj standardowy zestaw plików.
-3. Wypełnij `01-idea.md`.
-4. Przejdź przez kolejne etapy po kolei.
+1. Uruchom `simple-planning init`.
+2. Utwórz feature przez `simple-planning idea --name <feature-name> --description "<opis>"`.
+3. Pozwól agentowi wykonać `discovery` przez CLI.
+4. Przechodź do kolejnych etapów dopiero po jawnej decyzji użytkownika.
 5. Nie zaczynaj od `05-tech-spec.md`, jeśli nie ma jeszcze sensownego `03-product-spec.md` i `04-mvp.md`.
 
 ## Praca z istniejącym projektem
