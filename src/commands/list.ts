@@ -9,7 +9,7 @@ export async function runListCommand(cwd: string): Promise<CommandResult> {
     command: "list",
     message:
       index.features.length === 0
-        ? "Brak feature'ów w Simple Planning."
+        ? "Brak feature'ów w Simple Planning. Jeśli zaczynasz nowy temat, użyj 'simple-planning idea --name <feature-name> --description <text>'."
         : "Znaleziono feature'y w Simple Planning.",
     agentAction: "show_status",
     stopReason: "none",

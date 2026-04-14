@@ -54,6 +54,72 @@ test("init creates project skeleton and cursor command", async () => {
   );
 });
 
+test("init copies cursor command with explicit new feature guidance", async () => {
+  const cwd = await createTempWorkspace();
+
+  const initResult = runCli(cwd, ["init"]);
+  assert.equal(initResult.status, 0);
+
+  const commandText = await fs.readFile(
+    path.join(cwd, ".cursor", "commands", "use-simple-planning.md"),
+    "utf8",
+  );
+
+  assert.match(
+    commandText,
+    /Jeśli użytkownik opisuje nowy feature albo potwierdza, że chodzi o nowy feature/,
+  );
+  assert.match(
+    commandText,
+    /simple-planning idea --name <feature-name> --description/,
+  );
+});
+
+test("list suggests idea command when project has no features", async () => {
+  const cwd = await createTempWorkspace();
+
+  runCli(cwd, ["init"]);
+  const listResult = runCli(cwd, ["list"]);
+
+  assert.equal(listResult.status, 0);
+  assert.equal(listResult.parsed.ok, true);
+  assert.equal(listResult.parsed.data.count, 0);
+  assert.match(
+    listResult.parsed.message,
+    /Brak feature'ów w Simple Planning\./,
+  );
+  assert.match(
+    listResult.parsed.message,
+    /simple-planning idea --name <feature-name> --description <text>/,
+  );
+});
+
+test("missing feature error suggests list for existing and idea for new feature", async () => {
+  const cwd = await createTempWorkspace();
+
+  runCli(cwd, ["init"]);
+  const statusResult = runCli(cwd, [
+    "status",
+    "--feature",
+    "result-presentation",
+  ]);
+
+  assert.equal(statusResult.status, 1);
+  assert.equal(statusResult.parsed.ok, false);
+  assert.match(
+    statusResult.parsed.message,
+    /Nie znaleziono feature'a 'result-presentation'\./,
+  );
+  assert.match(
+    statusResult.parsed.message,
+    /Jeśli to istniejący feature, użyj 'simple-planning list'/,
+  );
+  assert.match(
+    statusResult.parsed.message,
+    /Jeśli to nowy feature, utwórz go przez 'simple-planning idea --name <feature-name> --description <text>'\./,
+  );
+});
+
 test("discovery completion blocks next step until user confirmation", async () => {
   const cwd = await createTempWorkspace();
 

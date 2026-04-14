@@ -182,7 +182,7 @@ export async function loadFeatureState(
 
   if (!matched) {
     throw new Error(
-      `Nie znaleziono feature'a '${featureRef}'. Użyj 'simple-planning list', aby zobaczyć dostępne feature'y.`,
+      `Nie znaleziono feature'a '${featureRef}'. Jeśli to istniejący feature, użyj 'simple-planning list', aby sprawdzić poprawny slug lub id. Jeśli to nowy feature, utwórz go przez 'simple-planning idea --name <feature-name> --description <text>'.`,
     );
   }
 
