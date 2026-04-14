@@ -18,6 +18,7 @@ Repo zawiera trzy główne obszary:
 - `product/` — dokumenty dotyczące całego produktu,
 - `features/` — dokumenty dotyczące pojedynczych funkcjonalności,
 - `.cursor/commands/use-simple-planning.md` — obowiązkową komendę wejściową do pracy z CLI,
+- `.simple-planning/commands/` — lokalne prompty etapów używane przez zainstalowany workflow,
 - `commands/` — źródłowe reguły etapów używane przez pakiet `simple-planning`.
 
 ## Rola AI

@@ -30,7 +30,7 @@ export function getProductRoot(cwd: string): string {
 }
 
 export function getProjectCommandsRoot(cwd: string): string {
-  return path.join(getWorkspaceRoot(cwd), "commands");
+  return path.join(getSimplePlanningRoot(cwd), "commands");
 }
 
 export function getStateRoot(cwd: string): string {

@@ -54,7 +54,7 @@ export async function runIdeaCommand(args: {
     ok: true,
     command: "idea",
     message:
-      "01-idea.md zostało utworzone. Następny krok: discovery. Użyj promptu @commands/Discovery.md.",
+      "01-idea.md zostało utworzone. Następny krok: discovery. Użyj promptu @.simple-planning/commands/Discovery.md.",
     agentAction: "prepare_next_step",
     stopReason: "none",
     data: {
@@ -72,11 +72,11 @@ export async function runIdeaCommand(args: {
         nextStep: state.nextSuggestedStep,
         prompt: {
           path: null,
-          ref: "@commands/Discovery.md",
+          ref: "@.simple-planning/commands/Discovery.md",
           text: nextPromptText,
         },
       },
-      nextPromptRef: "@commands/Discovery.md",
+      nextPromptRef: "@.simple-planning/commands/Discovery.md",
       nextPromptText,
       nextCommand: `simple-planning run discovery --feature ${state.slug}`,
     },

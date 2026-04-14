@@ -48,7 +48,9 @@ test("init creates project skeleton and cursor command", async () => {
     ),
   );
   await assert.doesNotReject(() =>
-    fs.access(path.join(cwd, "commands", "Discovery.md")),
+    fs.access(
+      path.join(cwd, ".simple-planning", "commands", "Discovery.md"),
+    ),
   );
 });
 
@@ -66,7 +68,10 @@ test("discovery completion blocks next step until user confirmation", async () =
   assert.equal(ideaResult.status, 0);
   assert.equal(ideaResult.parsed.agentAction, "prepare_next_step");
   assert.equal(ideaResult.parsed.stopReason, "none");
-  assert.equal(ideaResult.parsed.data.nextPromptRef, "@commands/Discovery.md");
+  assert.equal(
+    ideaResult.parsed.data.nextPromptRef,
+    "@.simple-planning/commands/Discovery.md",
+  );
   assert.match(ideaResult.parsed.data.nextPromptText, /# Discovery/);
   assert.equal(ideaResult.parsed.data.nextContext.nextStep, "discovery");
 
@@ -82,7 +87,7 @@ test("discovery completion blocks next step until user confirmation", async () =
   assert.equal(prepareDiscovery.parsed.data.step, "discovery");
   assert.equal(
     prepareDiscovery.parsed.data.commandGuideRef,
-    "@commands/Discovery.md",
+    "@.simple-planning/commands/Discovery.md",
   );
   assert.match(prepareDiscovery.parsed.data.commandGuideText, /# Discovery/);
   assert.equal(
@@ -91,7 +96,7 @@ test("discovery completion blocks next step until user confirmation", async () =
   );
   assert.equal(
     prepareDiscovery.parsed.data.sourceContext.prompt.ref,
-    "@commands/Discovery.md",
+    "@.simple-planning/commands/Discovery.md",
   );
 
   const discoveryFile = path.join(
@@ -153,7 +158,7 @@ test("discovery completion blocks next step until user confirmation", async () =
   assert.equal(confirmedNext.parsed.data.step, "product-spec");
   assert.equal(
     completeDiscovery.parsed.data.nextPromptRef,
-    "@commands/ProductSpec.md",
+    "@.simple-planning/commands/ProductSpec.md",
   );
   assert.match(completeDiscovery.parsed.data.nextPromptText, /# ProductSpec/);
 });

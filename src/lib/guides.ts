@@ -10,7 +10,7 @@ import {
 
 export function getGuideReference(step: Step): string | null {
   const guide = stepDefinitions[step].commandGuide;
-  return guide ? `@commands/${guide}` : null;
+  return guide ? `@.simple-planning/commands/${guide}` : null;
 }
 
 export function getProjectGuidePath(cwd: string, step: Step): string | null {

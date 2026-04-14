@@ -23,9 +23,9 @@ Docelowy sposób użycia workflow to CLI:
 3. Korzystaj z obowiązkowej komendy `.cursor/commands/use-simple-planning.md`.
 4. Do jawnego przechodzenia przez checkpointy używaj `.cursor/commands/continue-simple-planning.md`.
 5. Pozwól agentowi sterować kolejnymi etapami przez `simple-planning status`, `next`, `idea` i `run`.
-6. CLI zwraca też pełny prompt tekstowy dla etapu oraz referencję, np. `@commands/Discovery.md`, żeby agent nie musiał dodatkowo czytać pliku, ale użytkownik nadal widział źródło instrukcji.
+6. CLI zwraca też pełny prompt tekstowy dla etapu oraz referencję, np. `@.simple-planning/commands/Discovery.md`, żeby agent nie musiał dodatkowo czytać pliku, ale użytkownik nadal widział źródło instrukcji.
 
-W repo źródłowym foldery `commands/` i `planning/` pozostają źródłem reguł oraz szablonów używanych przez CLI. Po `simple-planning init` projekt dostaje własny folder `commands/`, żeby referencje typu `@commands/Discovery.md` działały lokalnie.
+W repo źródłowym foldery `commands/` i `planning/` pozostają źródłem reguł oraz szablonów używanych przez CLI. Po `simple-planning init` projekt dostaje własny folder `.simple-planning/commands/`, więc lokalne zmiany promptów są respektowane i nie są hardcoded w kodzie.
 
 ## Struktura repo
 
