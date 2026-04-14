@@ -30,6 +30,22 @@ export async function runWorkOnCurrentStepCommand(args: {
     };
   }
 
+  if (selection.kind === "no_active") {
+    return {
+      ok: true,
+      command: "work-on-current-step",
+      message:
+        "Brak aktywnych feature'ów z krokiem do dalszej pracy. Zamknięte feature'y nie mogą być redagowane jak aktywny workflow.",
+      agentAction: "stop_and_ask_user",
+      stopReason: "none",
+      data: {
+        availableFeatures: selection.features,
+        suggestedCommand:
+          "simple-planning status --feature <slug|id>",
+      },
+    };
+  }
+
   if (selection.kind === "missing") {
     return {
       ok: false,
@@ -38,6 +54,21 @@ export async function runWorkOnCurrentStepCommand(args: {
         `Nie znaleziono feature'a '${selection.featureRef}'. Jeśli to istniejący feature, użyj 'simple-planning list', aby sprawdzić poprawny slug lub id.`,
       agentAction: "stop_and_ask_user",
       stopReason: "none",
+    };
+  }
+
+  if (selection.kind === "closed") {
+    return {
+      ok: true,
+      command: "work-on-current-step",
+      message:
+        `Feature '${selection.feature.slug}' jest zamknięty z powodem '${selection.feature.closeReason}'. Nie można wznowić dla niego aktywnego kroku.`,
+      agentAction: "stop_and_ask_user",
+      stopReason: "none",
+      data: {
+        feature: selection.feature,
+        suggestedCommand: `simple-planning status --feature ${selection.feature.slug}`,
+      },
     };
   }
 

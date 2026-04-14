@@ -20,8 +20,8 @@ Docelowy sposób użycia workflow to CLI:
 
 1. Zainstaluj pakiet w projekcie.
 2. Uruchom `simple-planning init`.
-3. Używaj małych komend Cursor: `.cursor/commands/start-feature.md`, `.cursor/commands/work-on-current-step.md`, `.cursor/commands/continue-feature.md` i `.cursor/commands/feature-status.md`.
-4. Pozwól agentowi sterować kolejnymi etapami przez `simple-planning start`, `work-on-current-step`, `continue`, `status`, `idea` i `run`.
+3. Używaj małych komend Cursor: `.cursor/commands/start-feature.md`, `.cursor/commands/close-feature.md`, `.cursor/commands/work-on-current-step.md`, `.cursor/commands/continue-feature.md` i `.cursor/commands/feature-status.md`.
+4. Pozwól agentowi sterować kolejnymi etapami przez `simple-planning start`, `close-feature`, `work-on-current-step`, `continue`, `status`, `idea` i `run`.
 5. CLI zwraca też pełny prompt tekstowy dla etapu oraz referencję, np. `@.simple-planning/commands/Discovery.md`, żeby agent nie musiał dodatkowo czytać pliku, ale użytkownik nadal widział źródło instrukcji.
 
 W repo źródłowym foldery `commands/` i `planning/` pozostają źródłem reguł oraz szablonów używanych przez CLI. Po `simple-planning init` projekt dostaje własny folder `.simple-planning/commands/`, więc lokalne zmiany promptów są respektowane i nie są hardcoded w kodzie.
@@ -277,3 +277,5 @@ Celem tego repo jest doprowadzenie każdej funkcjonalności do stanu, w którym:
 - wiadomo co wchodzi do MVP,
 - wiadomo jak to zbudować,
 - wiadomo co dokładnie trzeba zrobić.
+
+Feature może też zostać jawnie zamknięty w CLI, jeśli temat został świadomie zakończony albo odrzucony. Zamknięcie lifecycle nie zastępuje wpisu w `07-decision-log.md`, jeśli decyzja ma znaczenie historyczne.

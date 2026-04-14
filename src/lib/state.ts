@@ -2,6 +2,7 @@ import crypto from "node:crypto";
 
 import {
   allSteps,
+  type FeatureCloseReason,
   type DocumentRecord,
   type FeatureState,
   type FeatureSummary,
@@ -112,6 +113,8 @@ export function createFeatureState(cwd: string, name: string): FeatureState {
     createdAt: nowIso(),
     updatedAt: nowIso(),
     status: "active",
+    closeReason: null,
+    closedAt: null,
     activeStep: null,
     lastCompletedStep: null,
     nextSuggestedStep: "idea",
@@ -139,6 +142,8 @@ export async function syncFeatureSummary(
     name: state.name,
     slug: state.slug,
     status: state.status,
+    closeReason: state.closeReason,
+    closedAt: state.closedAt,
     activeStep: state.activeStep,
     lastCompletedStep: state.lastCompletedStep,
     nextSuggestedStep: state.nextSuggestedStep,
@@ -164,6 +169,9 @@ export function summarizeFeatureState(state: FeatureState): FeatureWorkflowState
     featureId: state.featureId,
     featureName: state.name,
     featureSlug: state.slug,
+    featureStatus: state.status,
+    closeReason: state.closeReason,
+    closedAt: state.closedAt,
     activeStep: state.activeStep,
     lastCompletedStep: state.lastCompletedStep,
     nextSuggestedStep: state.nextSuggestedStep,
@@ -175,7 +183,9 @@ export function summarizeFeatureState(state: FeatureState): FeatureWorkflowState
 export type FeatureSelectionResolution =
   | { kind: "resolved"; feature: FeatureSummary }
   | { kind: "empty" }
+  | { kind: "no_active"; features: FeatureSummary[] }
   | { kind: "missing"; featureRef: string; features: FeatureSummary[] }
+  | { kind: "closed"; feature: FeatureSummary; features: FeatureSummary[] }
   | { kind: "ambiguous"; reason: string; features: FeatureSummary[] };
 
 function sortFeatureSummaries(features: FeatureSummary[]): FeatureSummary[] {
@@ -184,7 +194,19 @@ function sortFeatureSummaries(features: FeatureSummary[]): FeatureSummary[] {
   );
 }
 
-export async function resolveFeatureSelection(
+function selectFeatureByRef(
+  features: FeatureSummary[],
+  featureRef: string,
+): FeatureSummary | undefined {
+  return features.find(
+    (feature) =>
+      feature.featureId === featureRef ||
+      feature.slug === featureRef ||
+      feature.name === featureRef,
+  );
+}
+
+export async function resolveAnyFeatureSelection(
   cwd: string,
   featureRef?: string,
 ): Promise<FeatureSelectionResolution> {
@@ -192,13 +214,7 @@ export async function resolveFeatureSelection(
   const features = sortFeatureSummaries(index.features);
 
   if (featureRef) {
-    const matched = features.find(
-      (feature) =>
-        feature.featureId === featureRef ||
-        feature.slug === featureRef ||
-        feature.name === featureRef,
-    );
-
+    const matched = selectFeatureByRef(features, featureRef);
     if (!matched) {
       return {
         kind: "missing",
@@ -224,7 +240,74 @@ export async function resolveFeatureSelection(
     };
   }
 
-  const awaitingConfirmation = features.filter(
+  const activeFeatures = features.filter((feature) => feature.status === "active");
+  if (activeFeatures.length === 1) {
+    return {
+      kind: "resolved",
+      feature: activeFeatures[0],
+    };
+  }
+
+  return {
+    kind: "ambiguous",
+    reason:
+      "Istnieje kilka feature'ów i nie da się jednoznacznie wybrać właściwego bez decyzji użytkownika.",
+    features,
+  };
+}
+
+export async function resolveFeatureSelection(
+  cwd: string,
+  featureRef?: string,
+): Promise<FeatureSelectionResolution> {
+  const index = await ensureProjectIndex(cwd);
+  const features = sortFeatureSummaries(index.features);
+  const activeFeatures = features.filter((feature) => feature.status === "active");
+
+  if (featureRef) {
+    const matched = selectFeatureByRef(features, featureRef);
+
+    if (!matched) {
+      return {
+        kind: "missing",
+        featureRef,
+        features,
+      };
+    }
+
+    if (matched.status === "closed") {
+      return {
+        kind: "closed",
+        feature: matched,
+        features,
+      };
+    }
+
+    return {
+      kind: "resolved",
+      feature: matched,
+    };
+  }
+
+  if (features.length === 0) {
+    return { kind: "empty" };
+  }
+
+  if (activeFeatures.length === 0) {
+    return {
+      kind: "no_active",
+      features,
+    };
+  }
+
+  if (activeFeatures.length === 1) {
+    return {
+      kind: "resolved",
+      feature: activeFeatures[0],
+    };
+  }
+
+  const awaitingConfirmation = activeFeatures.filter(
     (feature) => feature.awaitingUserConfirmation,
   );
   if (awaitingConfirmation.length === 1) {
@@ -234,7 +317,9 @@ export async function resolveFeatureSelection(
     };
   }
 
-  const activeStepFeatures = features.filter((feature) => feature.activeStep !== null);
+  const activeStepFeatures = activeFeatures.filter(
+    (feature) => feature.activeStep !== null,
+  );
   if (activeStepFeatures.length === 1) {
     return {
       kind: "resolved",
@@ -256,19 +341,23 @@ export async function resolveActiveStepFeatureSelection(
 ): Promise<FeatureSelectionResolution> {
   const index = await ensureProjectIndex(cwd);
   const features = sortFeatureSummaries(index.features);
+  const activeFeatures = features.filter((feature) => feature.status === "active");
 
   if (featureRef) {
-    const matched = features.find(
-      (feature) =>
-        feature.featureId === featureRef ||
-        feature.slug === featureRef ||
-        feature.name === featureRef,
-    );
+    const matched = selectFeatureByRef(features, featureRef);
 
     if (!matched) {
       return {
         kind: "missing",
         featureRef,
+        features,
+      };
+    }
+
+    if (matched.status === "closed") {
+      return {
+        kind: "closed",
+        feature: matched,
         features,
       };
     }
@@ -283,7 +372,16 @@ export async function resolveActiveStepFeatureSelection(
     return { kind: "empty" };
   }
 
-  const activeStepFeatures = features.filter((feature) => feature.activeStep !== null);
+  if (activeFeatures.length === 0) {
+    return {
+      kind: "no_active",
+      features,
+    };
+  }
+
+  const activeStepFeatures = activeFeatures.filter(
+    (feature) => feature.activeStep !== null,
+  );
   if (activeStepFeatures.length === 1) {
     return {
       kind: "resolved",
@@ -300,10 +398,10 @@ export async function resolveActiveStepFeatureSelection(
     };
   }
 
-  if (features.length === 1) {
+  if (activeFeatures.length === 1) {
     return {
       kind: "resolved",
-      feature: features[0],
+      feature: activeFeatures[0],
     };
   }
 
@@ -319,7 +417,7 @@ export async function loadFeatureState(
   cwd: string,
   featureRef?: string,
 ): Promise<FeatureState> {
-  const resolution = await resolveFeatureSelection(cwd, featureRef);
+  const resolution = await resolveAnyFeatureSelection(cwd, featureRef);
   if (resolution.kind === "empty") {
     throw new Error(
       "Brak feature'ów w Simple Planning. Jeśli to nowy temat, utwórz go przez 'simple-planning start --name <feature-name> --description <text>' albo 'simple-planning idea --name <feature-name> --description <text>'.",
@@ -330,6 +428,10 @@ export async function loadFeatureState(
     throw new Error(
       `Nie znaleziono feature'a '${resolution.featureRef}'. Jeśli to istniejący feature, użyj 'simple-planning list', aby sprawdzić poprawny slug lub id. Jeśli to nowy feature, utwórz go przez 'simple-planning start --name <feature-name> --description <text>' albo 'simple-planning idea --name <feature-name> --description <text>'.`,
     );
+  }
+
+  if (resolution.kind === "closed" || resolution.kind === "no_active") {
+    throw new Error("Nie udało się załadować aktywnego feature'a.");
   }
 
   if (resolution.kind === "ambiguous") {
@@ -382,4 +484,16 @@ export function clearAwaitingUserConfirmation(state: FeatureState): void {
 export function setAwaitingUserConfirmation(state: FeatureState, step: Step): void {
   state.awaitingUserConfirmation = true;
   state.awaitingAfterStep = step;
+}
+
+export function closeFeatureState(
+  state: FeatureState,
+  reason: FeatureCloseReason,
+): void {
+  state.status = "closed";
+  state.closeReason = reason;
+  state.closedAt = nowIso();
+  state.activeStep = null;
+  state.nextSuggestedStep = null;
+  clearAwaitingUserConfirmation(state);
 }

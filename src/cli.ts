@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { runCloseFeatureCommand } from "./commands/close-feature.js";
 import { runContinueCommand } from "./commands/continue.js";
 import { runIdeaCommand } from "./commands/idea.js";
 import { runInitCommand } from "./commands/init.js";
@@ -23,6 +24,7 @@ function printHelp(): void {
 Commands:
   init
   start --name <feature-name> --description <text>
+  close-feature --reason <reason> [--feature <slug|id>]
   continue [--feature <slug|id>]
   work-on-current-step [--feature <slug|id>]
   idea --name <feature-name> --description <text>
@@ -62,6 +64,21 @@ async function main(): Promise<void> {
         );
         printResult(
           await runStartCommand({ cwd: process.cwd(), name, description }),
+        );
+        return;
+      }
+      case "close-feature": {
+        const reasonRaw = requireStringFlag(
+          parsed.flags,
+          "reason",
+          "Podaj powód zamknięcia przez --reason. Dozwolone: done, wont-do, duplicate, obsolete.",
+        );
+        printResult(
+          await runCloseFeatureCommand({
+            cwd: process.cwd(),
+            feature: optionalStringFlag(parsed.flags, "feature"),
+            reasonRaw,
+          }),
         );
         return;
       }

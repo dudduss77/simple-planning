@@ -299,6 +299,10 @@ Dozwolone statusy:
 - wpisy mają uzasadnienie,
 - po czasie da się zrozumieć dlaczego decyzja została podjęta.
 
+Ważne:
+- wpis w `07-decision-log.md` nie zamyka automatycznie feature'a w lifecycle CLI,
+- jeśli temat ma zostać formalnie zakończony albo porzucony, trzeba osobno zamknąć feature w stanie workflow.
+
 ## `08-parking-lot.md`
 
 ### Cel pliku

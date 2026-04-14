@@ -125,6 +125,12 @@ export function buildStartFeatureCursorCommandTemplate(
   return `# Start Feature\n\nUżywaj tej komendy tylko wtedy, gdy użytkownik chce rozpocząć nowy feature w Simple Planning.\n\n## Zasady\n- Jeśli nazwa feature'a nie jest jednoznaczna, zapytaj użytkownika o nazwę.\n- Jeśli opis jest zbyt krótki albo nie istnieje, poproś o krótki opis do \`01-idea.md\`.\n- Uruchom \`${packageCommand} start --name <feature-name> --description "<opis>"\`.\n- CLI samo ma utworzyć feature, \`01-idea.md\` i przygotować \`discovery\`.\n- Użyj tylko \`preparation.targetDocument\`, \`preparation.requiredFiles\` i \`preparation.prompt\` zwróconych przez CLI.\n- Po zaktualizowaniu pliku docelowego wywołaj \`preparation.nextCommand\` zwrócone przez CLI.\n- Jeśli CLI zwróci konieczność zatrzymania albo doprecyzowania, zatrzymaj się i zapytaj użytkownika.\n`;
 }
 
+export function buildCloseFeatureCursorCommandTemplate(
+  packageCommand = "npx simple-planning",
+): string {
+  return `# Close Feature\n\nUżywaj tej komendy wtedy, gdy użytkownik chce jawnie zamknąć feature w lifecycle Simple Planning.\n\n## Zasady\n- Jeśli nie wiadomo, który feature ma zostać zamknięty, zapytaj użytkownika albo pozwól CLI zwrócić wybór feature'a.\n- Jeśli powód zamknięcia nie jest jawny, poproś użytkownika o jeden z powodów: \`done\`, \`wont-do\`, \`duplicate\`, \`obsolete\`.\n- Uruchom \`${packageCommand} close-feature --reason <reason> [--feature <slug|id>]\`.\n- Ta komenda zamyka feature w stanie CLI i nie aktualizuje automatycznie \`07-decision-log.md\`.\n- Po zamknięciu nie próbuj uruchamiać \`continue\` ani \`work-on-current-step\` dla tego feature'a.\n`;
+}
+
 export function buildContinueFeatureCursorCommandTemplate(
   packageCommand = "npx simple-planning",
 ): string {

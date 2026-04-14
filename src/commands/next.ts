@@ -31,6 +31,22 @@ export async function runNextCommand(args: {
     };
   }
 
+  if (selection.kind === "no_active") {
+    return {
+      ok: true,
+      command: "next",
+      message:
+        "Brak aktywnych feature'ów do dalszej pracy. Zamknięte feature'y nie mają kolejnego kroku.",
+      agentAction: "stop_and_ask_user",
+      stopReason: "none",
+      data: {
+        availableFeatures: selection.features,
+        suggestedCommand:
+          "simple-planning status --feature <slug|id>",
+      },
+    };
+  }
+
   if (selection.kind === "missing") {
     return {
       ok: false,
@@ -39,6 +55,21 @@ export async function runNextCommand(args: {
         `Nie znaleziono feature'a '${selection.featureRef}'. Jeśli to istniejący feature, użyj 'simple-planning list', aby sprawdzić poprawny slug lub id. Jeśli to nowy feature, uruchom 'simple-planning start --name <feature-name> --description <text>'.`,
       agentAction: "stop_and_ask_user",
       stopReason: "none",
+    };
+  }
+
+  if (selection.kind === "closed") {
+    return {
+      ok: true,
+      command: "next",
+      message:
+        `Feature '${selection.feature.slug}' jest zamknięty z powodem '${selection.feature.closeReason}'. Zamknięte feature'y nie mają kolejnego kroku.`,
+      agentAction: "stop_and_ask_user",
+      stopReason: "none",
+      data: {
+        feature: selection.feature,
+        suggestedCommand: `simple-planning status --feature ${selection.feature.slug}`,
+      },
     };
   }
 

@@ -5,7 +5,7 @@ import {
 } from "../lib/contracts.js";
 import {
   loadFeatureState,
-  resolveFeatureSelection,
+  resolveAnyFeatureSelection,
   saveFeatureState,
   summarizeFeatureState,
   syncFeatureSummary,
@@ -16,7 +16,7 @@ export async function runStatusCommand(args: {
   cwd: string;
   feature?: string;
 }): Promise<CommandResult> {
-  const selection = await resolveFeatureSelection(args.cwd, args.feature);
+  const selection = await resolveAnyFeatureSelection(args.cwd, args.feature);
   if (selection.kind === "empty") {
     return {
       ok: true,
@@ -29,6 +29,16 @@ export async function runStatusCommand(args: {
         suggestedCommand:
           "simple-planning start --name <feature-name> --description <text>",
       },
+    };
+  }
+
+  if (selection.kind === "closed" || selection.kind === "no_active") {
+    return {
+      ok: false,
+      command: "status",
+      message: "Nie udało się ustalić statusu feature'a.",
+      agentAction: "stop_and_ask_user",
+      stopReason: "none",
     };
   }
 
@@ -55,7 +65,7 @@ export async function runStatusCommand(args: {
       ok: true,
       command: "status",
       message:
-        "Istnieje kilka aktywnych feature'ów. Wskaż, dla którego mam pokazać status.",
+        "Istnieje kilka feature'ów. Wskaż, dla którego mam pokazać status.",
       agentAction: "choose_feature",
       stopReason: "none",
       data,
@@ -94,7 +104,9 @@ export async function runStatusCommand(args: {
     command: "status",
     message: state.awaitingUserConfirmation
       ? "Feature czeka na decyzję użytkownika."
-      : "Pobrano status feature'a.",
+      : state.status === "closed"
+        ? `Feature jest zamknięty z powodem '${state.closeReason}'.`
+        : "Pobrano status feature'a.",
     agentAction: state.awaitingUserConfirmation
       ? "stop_and_ask_user"
       : "show_status",

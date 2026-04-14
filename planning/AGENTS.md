@@ -100,11 +100,13 @@ Domyślnym sposobem pracy w tym repo są celowane komendy Cursor i CLI `simple-p
 
 Agent ma zaczynać od odpowiedniej, wąskiej komendy wejściowej:
 - nowy feature -> `.cursor/commands/start-feature.md`,
+- zamknięcie lifecycle feature'a -> `.cursor/commands/close-feature.md`,
 - dalsza redakcja bieżącego dokumentu -> `.cursor/commands/work-on-current-step.md`,
 - kontynuacja -> `.cursor/commands/continue-feature.md`,
 - sam status -> `.cursor/commands/feature-status.md`.
 Agent ma wykonywać tylko zakres wynikający z uruchomionej komendy i odpowiedzi CLI.
 Agent nie ma sam przechodzić do kolejnych etapów bez jawnego użycia komendy kontynuacji.
+Agent nie ma sam zamykać feature'a jako efektu ubocznego redakcji dokumentu; zamknięcie wymaga jawnej komendy.
 Agent nie ma aktualizować innych dokumentów niż te wymagane przez bieżące polecenie, chyba że użytkownik wyraźnie o to poprosi, np. dla `07-decision-log.md` lub `08-parking-lot.md`.
 
 ## Bootstrap istniejącego systemu

@@ -51,6 +51,9 @@ test("init creates project skeleton and cursor command", async () => {
     fs.access(path.join(cwd, ".cursor", "commands", "start-feature.md")),
   );
   await assert.doesNotReject(() =>
+    fs.access(path.join(cwd, ".cursor", "commands", "close-feature.md")),
+  );
+  await assert.doesNotReject(() =>
     fs.access(path.join(cwd, ".cursor", "commands", "continue-feature.md")),
   );
   await assert.doesNotReject(() =>
@@ -76,6 +79,10 @@ test("init copies dedicated cursor commands", async () => {
     path.join(cwd, ".cursor", "commands", "start-feature.md"),
     "utf8",
   );
+  const closeCommandText = await fs.readFile(
+    path.join(cwd, ".cursor", "commands", "close-feature.md"),
+    "utf8",
+  );
   const continueCommandText = await fs.readFile(
     path.join(cwd, ".cursor", "commands", "continue-feature.md"),
     "utf8",
@@ -90,6 +97,10 @@ test("init copies dedicated cursor commands", async () => {
   );
 
   assert.match(startCommandText, /npx simple-planning start --name <feature-name>/);
+  assert.match(
+    closeCommandText,
+    /npx simple-planning close-feature --reason <reason> \[--feature <slug\|id>\]/,
+  );
   assert.match(continueCommandText, /npx simple-planning continue \[--feature <slug\|id>\]/);
   assert.match(workCommandText, /npx simple-planning work-on-current-step \[--feature <slug\|id>\]/);
   assert.match(statusCommandText, /npx simple-planning status \[--feature <slug\|id>\]/);
@@ -210,6 +221,70 @@ test("continue asks user when multiple active features are possible", async () =
     continueResult.parsed.data.suggestedCommand,
     /simple-planning continue --feature <slug\|id>/,
   );
+});
+
+test("close-feature closes active feature and status reports closure", async () => {
+  const cwd = await createTempWorkspace();
+
+  runCli(cwd, ["init"]);
+  runCli(cwd, [
+    "start",
+    "--name",
+    "Feature Alpha",
+    "--description",
+    "Opis idei.",
+  ]);
+
+  const closeResult = runCli(cwd, [
+    "close-feature",
+    "--feature",
+    "feature-alpha",
+    "--reason",
+    "wont-do",
+  ]);
+  assert.equal(closeResult.status, 0);
+  assert.equal(closeResult.parsed.ok, true);
+  assert.equal(closeResult.parsed.data.featureStatus, "closed");
+  assert.equal(closeResult.parsed.data.closeReason, "wont-do");
+
+  const statusResult = runCli(cwd, ["status", "--feature", "feature-alpha"]);
+  assert.equal(statusResult.status, 0);
+  assert.equal(statusResult.parsed.ok, true);
+  assert.equal(statusResult.parsed.data.featureStatus, "closed");
+  assert.equal(statusResult.parsed.data.closeReason, "wont-do");
+  assert.match(statusResult.parsed.message, /Feature jest zamknięty/);
+});
+
+test("continue and work-on-current-step refuse closed features", async () => {
+  const cwd = await createTempWorkspace();
+
+  runCli(cwd, ["init"]);
+  runCli(cwd, [
+    "start",
+    "--name",
+    "Feature Alpha",
+    "--description",
+    "Opis idei.",
+  ]);
+  runCli(cwd, [
+    "close-feature",
+    "--feature",
+    "feature-alpha",
+    "--reason",
+    "obsolete",
+  ]);
+
+  const continueResult = runCli(cwd, ["continue", "--feature", "feature-alpha"]);
+  assert.equal(continueResult.status, 0);
+  assert.equal(continueResult.parsed.ok, true);
+  assert.equal(continueResult.parsed.agentAction, "stop_and_ask_user");
+  assert.match(continueResult.parsed.message, /jest zamknięty z powodem 'obsolete'/);
+
+  const workResult = runCli(cwd, ["work-on-current-step", "--feature", "feature-alpha"]);
+  assert.equal(workResult.status, 0);
+  assert.equal(workResult.parsed.ok, true);
+  assert.equal(workResult.parsed.agentAction, "stop_and_ask_user");
+  assert.match(workResult.parsed.message, /jest zamknięty z powodem 'obsolete'/);
 });
 
 test("work-on-current-step resumes only the active step", async () => {

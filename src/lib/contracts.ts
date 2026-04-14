@@ -10,10 +10,18 @@ export const mainSteps = [
 export const sideSteps = ["decision-log", "parking-lot"] as const;
 
 export const allSteps = [...mainSteps, ...sideSteps] as const;
+export const featureCloseReasons = [
+  "done",
+  "wont-do",
+  "duplicate",
+  "obsolete",
+] as const;
 
 export type MainStep = (typeof mainSteps)[number];
 export type SideStep = (typeof sideSteps)[number];
 export type Step = (typeof allSteps)[number];
+export type FeatureStatus = "active" | "closed";
+export type FeatureCloseReason = (typeof featureCloseReasons)[number];
 export type AgentAction =
   | "initialize_project"
   | "choose_feature"
@@ -50,7 +58,9 @@ export interface FeatureSummary {
   featureId: string;
   name: string;
   slug: string;
-  status: "active";
+  status: FeatureStatus;
+  closeReason: FeatureCloseReason | null;
+  closedAt: string | null;
   activeStep: Step | null;
   lastCompletedStep: Step | null;
   nextSuggestedStep: MainStep | null;
@@ -74,7 +84,9 @@ export interface FeatureState {
   slug: string;
   createdAt: string;
   updatedAt: string;
-  status: "active";
+  status: FeatureStatus;
+  closeReason: FeatureCloseReason | null;
+  closedAt: string | null;
   activeStep: Step | null;
   lastCompletedStep: Step | null;
   nextSuggestedStep: MainStep | null;
@@ -112,6 +124,9 @@ export interface FeatureWorkflowState {
   featureId: string;
   featureName: string;
   featureSlug: string;
+  featureStatus: FeatureStatus;
+  closeReason: FeatureCloseReason | null;
+  closedAt: string | null;
   activeStep: Step | null;
   lastCompletedStep: Step | null;
   nextSuggestedStep: MainStep | null;

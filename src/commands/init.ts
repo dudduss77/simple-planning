@@ -16,6 +16,7 @@ import {
 } from "../lib/project-paths.js";
 import { ensureProjectIndex } from "../lib/state.js";
 import {
+  buildCloseFeatureCursorCommandTemplate,
   buildContinueFeatureCursorCommandTemplate,
   buildFeatureStatusCursorCommandTemplate,
   buildStartFeatureCursorCommandTemplate,
@@ -38,6 +39,10 @@ const cursorCommandFiles = [
   {
     filename: "start-feature.md",
     fallback: () => buildStartFeatureCursorCommandTemplate(),
+  },
+  {
+    filename: "close-feature.md",
+    fallback: () => buildCloseFeatureCursorCommandTemplate(),
   },
   {
     filename: "continue-feature.md",
