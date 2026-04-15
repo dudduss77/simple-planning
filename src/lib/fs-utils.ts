@@ -31,6 +31,14 @@ export async function writeJsonFile(
   await fs.writeFile(filePath, `${JSON.stringify(value, null, 2)}\n`, "utf8");
 }
 
+export async function writeTextFile(
+  filePath: string,
+  content: string,
+): Promise<void> {
+  await ensureDirectory(path.dirname(filePath));
+  await fs.writeFile(filePath, content, "utf8");
+}
+
 export async function ensureFileWithContent(
   filePath: string,
   content: string,

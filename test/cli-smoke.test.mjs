@@ -12,10 +12,11 @@ async function createTempWorkspace() {
   return fs.mkdtemp(path.join(os.tmpdir(), "simple-planning-"));
 }
 
-function runCli(cwd, args) {
+function runCli(cwd, args, options = {}) {
   const result = spawnSync(process.execPath, [cliPath, ...args], {
     cwd,
     encoding: "utf8",
+    input: options.input,
   });
 
   const stdout = result.stdout.trim();
@@ -41,6 +42,10 @@ async function writeVisionSeed(filePath, text) {
     `Status: draft\nOwner: test\nLast updated: 2026-04-13\n\n# Vision\n\n## Cel produktu\n${text}\n`,
     "utf8",
   );
+}
+
+async function writeJson(filePath, value) {
+  await fs.writeFile(filePath, `${JSON.stringify(value, null, 2)}\n`, "utf8");
 }
 
 test("init creates project skeleton and cursor command", async () => {
@@ -618,4 +623,122 @@ test("continue resumes checkpoint for the single feature awaiting confirmation",
     workResult.parsed.message,
     /Wznowiono aktywny etap 'product-spec'/,
   );
+});
+
+test("update shows managed files and overwrites them after confirmation", async () => {
+  const cwd = await createTempWorkspace();
+
+  runCli(cwd, ["init"]);
+  const managedFile = path.join(
+    cwd,
+    ".cursor",
+    "commands",
+    "start-feature.md",
+  );
+  await fs.writeFile(managedFile, "# local override\n", "utf8");
+
+  const updateResult = runCli(cwd, ["update"], { input: "y\n" });
+  assert.equal(updateResult.status, 0);
+  assert.equal(updateResult.parsed.ok, true);
+  assert.equal(updateResult.parsed.agentAction, "update_project");
+  assert.match(updateResult.stderr, /start-feature\.md/);
+  assert.equal(
+    updateResult.parsed.data.overwrittenFiles.includes(managedFile),
+    true,
+  );
+
+  const updatedContents = await fs.readFile(managedFile, "utf8");
+  assert.match(updatedContents, /# Start Feature/);
+});
+
+test("update does not overwrite managed files after rejection", async () => {
+  const cwd = await createTempWorkspace();
+
+  runCli(cwd, ["init"]);
+  const managedFile = path.join(
+    cwd,
+    ".simple-planning",
+    "commands",
+    "Vision.md",
+  );
+  await fs.writeFile(managedFile, "# lokalna zmiana\n", "utf8");
+
+  const updateResult = runCli(cwd, ["update"], { input: "n\n" });
+  assert.equal(updateResult.status, 0);
+  assert.equal(updateResult.parsed.ok, true);
+  assert.equal(updateResult.parsed.agentAction, "stop_and_ask_user");
+  assert.equal(
+    updateResult.parsed.data.pendingOverwriteFiles.includes(managedFile),
+    true,
+  );
+
+  const updatedContents = await fs.readFile(managedFile, "utf8");
+  assert.equal(updatedContents, "# lokalna zmiana\n");
+});
+
+test("update preserves local planning documents", async () => {
+  const cwd = await createTempWorkspace();
+
+  runCli(cwd, ["init"]);
+  const visionFile = path.join(
+    cwd,
+    ".simple-planning",
+    "planning",
+    "product",
+    "01-vision.md",
+  );
+  await fs.writeFile(visionFile, "# moja vision\n", "utf8");
+
+  const updateResult = runCli(cwd, ["update"], { input: "y\n" });
+  assert.equal(updateResult.status, 0);
+  assert.equal(updateResult.parsed.ok, true);
+  assert.equal(updateResult.parsed.data.skippedFiles.includes(visionFile), true);
+
+  const updatedContents = await fs.readFile(visionFile, "utf8");
+  assert.equal(updatedContents, "# moja vision\n");
+});
+
+test("update migrates existing state files without losing feature data", async () => {
+  const cwd = await createTempWorkspace();
+
+  runCli(cwd, ["init"]);
+  runCli(cwd, [
+    "start",
+    "--name",
+    "Feature Gamma",
+    "--description",
+    "Opis idei.",
+  ]);
+
+  const indexPath = path.join(cwd, ".simple-planning", "state", "index.json");
+  const index = JSON.parse(await fs.readFile(indexPath, "utf8"));
+  index.version = 1;
+  delete index.lastMigrationAt;
+  await writeJson(indexPath, index);
+
+  const featureStatePath = path.join(
+    cwd,
+    ".simple-planning",
+    "state",
+    "features",
+    `${index.features[0].featureId}.json`,
+  );
+  const featureState = JSON.parse(await fs.readFile(featureStatePath, "utf8"));
+  featureState.version = 1;
+  delete featureState.lastMigrationAt;
+  await writeJson(featureStatePath, featureState);
+
+  const updateResult = runCli(cwd, ["update"], { input: "y\n" });
+  assert.equal(updateResult.status, 0);
+  assert.equal(updateResult.parsed.ok, true);
+  assert.equal(updateResult.parsed.data.migratedIndex, true);
+  assert.equal(updateResult.parsed.data.migratedFeatureStates.length, 1);
+
+  const migratedIndex = JSON.parse(await fs.readFile(indexPath, "utf8"));
+  const migratedFeatureState = JSON.parse(await fs.readFile(featureStatePath, "utf8"));
+  assert.equal(migratedIndex.version, 2);
+  assert.equal(typeof migratedIndex.lastMigrationAt, "string");
+  assert.equal(migratedFeatureState.version, 2);
+  assert.equal(typeof migratedFeatureState.lastMigrationAt, "string");
+  assert.equal(migratedFeatureState.slug, "feature-gamma");
 });

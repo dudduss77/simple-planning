@@ -33,6 +33,10 @@ export function getProjectCommandsRoot(cwd: string): string {
   return path.join(getSimplePlanningRoot(cwd), "commands");
 }
 
+export function getCursorCommandsRoot(cwd: string): string {
+  return path.join(getWorkspaceRoot(cwd), ".cursor", "commands");
+}
+
 export function getStateRoot(cwd: string): string {
   return path.join(getSimplePlanningRoot(cwd), "state");
 }

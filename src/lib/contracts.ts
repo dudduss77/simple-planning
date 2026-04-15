@@ -24,6 +24,7 @@ export type FeatureStatus = "active" | "closed";
 export type FeatureCloseReason = (typeof featureCloseReasons)[number];
 export type AgentAction =
   | "initialize_project"
+  | "update_project"
   | "choose_feature"
   | "show_status"
   | "show_next_step"
@@ -49,9 +50,10 @@ export interface StepDefinition {
 }
 
 export interface ProjectIndex {
-  version: 1;
+  version: number;
   initializedAt: string;
   updatedAt: string;
+  lastMigrationAt: string | null;
   features: FeatureSummary[];
 }
 
@@ -79,12 +81,13 @@ export interface DocumentRecord {
 }
 
 export interface FeatureState {
-  version: 1;
+  version: number;
   featureId: string;
   name: string;
   slug: string;
   createdAt: string;
   updatedAt: string;
+  lastMigrationAt: string | null;
   status: FeatureStatus;
   closeReason: FeatureCloseReason | null;
   closedAt: string | null;
@@ -103,6 +106,16 @@ export interface CommandResult {
   agentAction: AgentAction;
   stopReason: StopReason;
   data?: unknown;
+}
+
+export interface UpdateResultData {
+  createdFiles: string[];
+  overwrittenFiles: string[];
+  unchangedFiles: string[];
+  skippedFiles: string[];
+  pendingOverwriteFiles: string[];
+  migratedIndex: boolean;
+  migratedFeatureStates: string[];
 }
 
 export interface PromptContext {
