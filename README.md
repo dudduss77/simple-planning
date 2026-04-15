@@ -1,6 +1,7 @@
 # Project Docs Workflow
 
 To repo służy do uporządkowanego rozwijania produktu i funkcjonalności z pomocą AI.
+Jest też źródłem pakietu CLI `simple-planning`, który przenosi ten workflow do innych projektów bez ręcznego kopiowania folderów.
 
 Celem nie jest tworzenie „ładnej dokumentacji”, tylko utrzymywanie jednego, spójnego procesu:
 - od pomysłu,
@@ -12,6 +13,18 @@ Celem nie jest tworzenie „ładnej dokumentacji”, tylko utrzymywanie jednego,
 Dokumenty są podzielone na dwa poziomy:
 - `product/` — rzeczy dotyczące całego produktu,
 - `features/` — rzeczy dotyczące konkretnej funkcjonalności.
+
+## Simple Planning CLI
+
+Docelowy sposób użycia workflow to CLI:
+
+1. Zainstaluj pakiet w projekcie.
+2. Uruchom `simple-planning init`.
+3. Używaj małych komend Cursor: `.cursor/commands/bootstrap-project.md`, `.cursor/commands/start-feature.md`, `.cursor/commands/close-feature.md`, `.cursor/commands/work-on-current-step.md`, `.cursor/commands/continue-feature.md` i `.cursor/commands/feature-status.md`.
+4. Pozwól agentowi sterować kolejnymi etapami przez `simple-planning bootstrap`, `start`, `close-feature`, `work-on-current-step`, `continue`, `status`, `idea` i `run`.
+5. CLI zwraca też pełny prompt tekstowy dla etapu oraz referencję, np. `@.simple-planning/commands/Discovery.md`, żeby agent nie musiał dodatkowo czytać pliku, ale użytkownik nadal widział źródło instrukcji.
+
+W repo źródłowym folder `commands/` jest źródłem promptów używanych przez CLI, w tym promptów bootstrapowych `Vision.md` i `Roadmap.md`. Po `simple-planning init` projekt dostaje własny folder `.simple-planning/commands/`, więc lokalne zmiany promptów są respektowane i nie są hardcoded w kodzie.
 
 ## Struktura repo
 
@@ -197,11 +210,11 @@ Preferowany styl:
 
 ## Jak zacząć nową funkcjonalność
 
-1. Utwórz folder `features/<feature-name>/`.
-2. Skopiuj standardowy zestaw plików.
-3. Wypełnij `01-idea.md`.
-4. Przejdź przez kolejne etapy po kolei.
-5. Nie zaczynaj od `05-tech-spec.md`, jeśli nie ma jeszcze sensownego `03-product-spec.md` i `04-mvp.md`.
+1. Uruchom `simple-planning init`.
+2. Utwórz nowy feature przez `simple-planning start --name <feature-name> --description "<opis>"`.
+3. Pozwól agentowi zredagować przygotowany przez CLI etap `discovery`.
+4. Po każdym etapie od `discovery` dalej zatrzymaj się, przejrzyj dokument i dopiero wtedy każ agentowi iść dalej.
+5. Nie przechodź do `05-tech-spec`, jeśli nie ma jeszcze sensownego `03-product-spec.md` i `04-mvp.md`.
 
 ## Praca z istniejącym projektem
 
@@ -213,6 +226,9 @@ Stosujemy tryb bootstrap.
 ### Zasady bootstrapu
 
 Przy zasilaniu istniejącego projektu:
+- najpierw człowiek seeduje `product/01-vision.md`,
+- `simple-planning bootstrap` zatrzymuje się, jeśli `01-vision.md` nie ma jeszcze sensownego materiału wejściowego,
+- bootstrap porządkuje `01-vision.md`, tworzy `02-roadmap.md` oraz specjalny feature `features/bootstrap/`,
 - opisujemy aktualny stan zamiast rekonstruować pełną historię,
 - opieramy się na kodzie, istniejącej dokumentacji i wiedzy właściciela projektu,
 - możemy tworzyć `01-idea.md` retroaktywnie jako opis celu lub intencji istniejącej funkcjonalności,
@@ -237,6 +253,7 @@ Celem bootstrapu jest doprowadzenie repo do stanu, w którym:
 - wiadomo jak to działa,
 - wiadomo czego brakuje,
 - wiadomo jak dalej rozwijać projekt w uporządkowany sposób.
+- a specjalny feature `bootstrap` kończy pierwszy przebieg na `02-discovery.md`, po czym dalsza praca wraca do zwykłego `work-on-current-step` albo `continue-feature`.
 
 ## Status dokumentów
 
@@ -264,3 +281,5 @@ Celem tego repo jest doprowadzenie każdej funkcjonalności do stanu, w którym:
 - wiadomo co wchodzi do MVP,
 - wiadomo jak to zbudować,
 - wiadomo co dokładnie trzeba zrobić.
+
+Feature może też zostać jawnie zamknięty w CLI, jeśli temat został świadomie zakończony albo odrzucony. Zamknięcie lifecycle nie zastępuje wpisu w `07-decision-log.md`, jeśli decyzja ma znaczenie historyczne.

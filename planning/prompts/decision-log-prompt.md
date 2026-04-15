@@ -1,4 +1,6 @@
-Zaktualizuj 07-decision-log.md na podstawie nowych ustaleń z bieżącej pracy.
+# DecisionLog
+
+Cel: Zaktualizuj 07-decision-log.md na podstawie nowych ustaleń z bieżącej pracy.
 
 Reguły:
 - Jeśli nie zapadła żadna istotna decyzja, zatrzymaj się i napisz tylko: "Brak nowej decyzji do zapisania."
