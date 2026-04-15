@@ -129,6 +129,38 @@ test("init copies dedicated cursor commands", async () => {
   assert.match(workCommandText, /npx simple-planning work-on-current-step \[--feature <slug\|id>\]/);
   assert.match(statusCommandText, /npx simple-planning status \[--feature <slug\|id>\]/);
   assert.match(bootstrapCommandText, /npx simple-planning bootstrap/);
+  assert.match(
+    startCommandText,
+    /Po zaktualizowaniu pliku docelowego zatrzymaj się i oddaj kontrolę użytkownikowi\./,
+  );
+  assert.doesNotMatch(
+    startCommandText,
+    /Po zaktualizowaniu pliku docelowego wywołaj `preparation\.nextCommand`/,
+  );
+  assert.match(
+    continueCommandText,
+    /Jeśli `resumedFromCheckpoint` jest `true`, potraktuj to jako przygotowanie nowego etapu:/,
+  );
+  assert.match(
+    continueCommandText,
+    /Jeśli `resumedFromCheckpoint` jest `false` i CLI wznowiło już aktywny etap/,
+  );
+  assert.match(
+    workCommandText,
+    /Nie wywołuj `preparation\.nextCommand`, chyba że użytkownik wyraźnie poprosi o zamknięcie bieżącego etapu\./,
+  );
+  assert.doesNotMatch(
+    workCommandText,
+    /wywołaj `preparation\.nextCommand` zwrócone przez CLI tylko po to, by oznaczyć bieżący krok jako ukończony/,
+  );
+  assert.match(
+    bootstrapCommandText,
+    /Po zaktualizowaniu bootstrapowego discovery zatrzymaj się i oddaj kontrolę użytkownikowi\./,
+  );
+  assert.doesNotMatch(
+    bootstrapCommandText,
+    /Po zaktualizowaniu bootstrapowego discovery uruchom `discoveryPreparation\.nextCommand`/,
+  );
 });
 
 test("list suggests start command when project has no features", async () => {
@@ -309,6 +341,10 @@ test("bootstrap prepares product docs and bootstrap discovery", async () => {
   assert.equal(
     bootstrapResult.parsed.data.discoveryPreparation.prompt.ref,
     "@.simple-planning/commands/Discovery.md",
+  );
+  assert.match(
+    bootstrapResult.parsed.message,
+    /bootstrapowe discovery, potem zatrzymaj się i oddaj kontrolę użytkownikowi/i,
   );
   assert.match(
     bootstrapResult.parsed.data.discoveryPreparation.nextCommand,
@@ -558,6 +594,7 @@ test("continue resumes checkpoint for the single feature awaiting confirmation",
   assert.equal(continueResult.parsed.agentAction, "write_document");
   assert.equal(continueResult.parsed.stopReason, "none");
   assert.equal(continueResult.parsed.data.resumedFromCheckpoint, true);
+  assert.equal(continueResult.parsed.data.activeStep, "product-spec");
   assert.equal(
     continueResult.parsed.data.preparation.step,
     "product-spec",
@@ -569,5 +606,16 @@ test("continue resumes checkpoint for the single feature awaiting confirmation",
   assert.match(
     continueResult.parsed.data.preparation.prompt.text,
     /# ProductSpec/,
+  );
+
+  const workResult = runCli(cwd, ["work-on-current-step", "--feature", "feature-alpha"]);
+  assert.equal(workResult.status, 0);
+  assert.equal(workResult.parsed.ok, true);
+  assert.equal(workResult.parsed.agentAction, "write_document");
+  assert.equal(workResult.parsed.data.activeStep, "product-spec");
+  assert.equal(workResult.parsed.data.preparation.step, "product-spec");
+  assert.match(
+    workResult.parsed.message,
+    /Wznowiono aktywny etap 'product-spec'/,
   );
 });

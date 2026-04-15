@@ -187,7 +187,7 @@ export async function runBootstrapCommand(args: {
     ok: true,
     command: "bootstrap",
     message:
-      "Przygotowano bootstrap istniejącego projektu. Zredaguj kolejno vision, roadmapę i bootstrapowe discovery, potem oznacz discovery jako ukończone i zatrzymaj się.",
+      "Przygotowano bootstrap istniejącego projektu. Zredaguj kolejno vision, roadmapę i bootstrapowe discovery, potem zatrzymaj się i oddaj kontrolę użytkownikowi.",
     agentAction: "write_bootstrap_documents",
     stopReason: "none",
     data,

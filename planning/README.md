@@ -212,8 +212,9 @@ Preferowany styl:
 1. Uruchom `simple-planning init`.
 2. Utwórz feature przez `simple-planning start --name <feature-name> --description "<opis>"`.
 3. Pozwól agentowi wykonać przygotowany przez CLI etap `discovery`.
-4. Przechodź do kolejnych etapów dopiero po jawnej decyzji użytkownika.
-5. Nie zaczynaj od `05-tech-spec.md`, jeśli nie ma jeszcze sensownego `03-product-spec.md` i `04-mvp.md`.
+4. Po redakcji bieżącego etapu zatrzymaj się; samo zredagowanie dokumentu nie powinno automatycznie zamykać kroku.
+5. Przechodź do kolejnych etapów dopiero po jawnej decyzji użytkownika.
+6. Nie zaczynaj od `05-tech-spec.md`, jeśli nie ma jeszcze sensownego `03-product-spec.md` i `04-mvp.md`.
 
 ## Praca z istniejącym projektem
 
@@ -228,6 +229,7 @@ Przy zasilaniu istniejącego projektu:
 - najpierw seedujemy `product/01-vision.md` ręcznie,
 - bootstrap zatrzymuje się, jeśli vision jest zbyt ubogie,
 - `simple-planning bootstrap` porządkuje vision, buduje roadmapę i tworzy specjalny feature `bootstrap`,
+- po redakcji bootstrapowego `discovery` agent ma się zatrzymać, a nie domykać ten etap automatycznie,
 - opisujemy aktualny stan zamiast rekonstruować pełną historię,
 - opieramy się na kodzie, istniejącej dokumentacji i wiedzy właściciela projektu,
 - możemy tworzyć `01-idea.md` retroaktywnie jako opis celu lub intencji istniejącej funkcjonalności,

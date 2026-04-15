@@ -8,5 +8,6 @@ Używaj tej komendy tylko wtedy, gdy użytkownik chce rozpocząć nowy feature w
 - Uruchom `npx simple-planning start --name <feature-name> --description "<opis>"`.
 - CLI samo ma utworzyć feature, `01-idea.md` i przygotować `discovery`.
 - Użyj tylko `preparation.targetDocument`, `preparation.requiredFiles` i `preparation.prompt` zwróconych przez CLI.
-- Po zaktualizowaniu pliku docelowego wywołaj `preparation.nextCommand` zwrócone przez CLI.
+- Po zaktualizowaniu pliku docelowego zatrzymaj się i oddaj kontrolę użytkownikowi.
+- Nie wywołuj `preparation.nextCommand` tylko dlatego, że etap został właśnie zredagowany.
 - Jeśli CLI zwróci konieczność zatrzymania albo doprecyzowania, zatrzymaj się i zapytaj użytkownika.
