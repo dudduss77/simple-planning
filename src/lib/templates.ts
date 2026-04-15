@@ -149,6 +149,12 @@ export function buildFeatureStatusCursorCommandTemplate(
   return `# Feature Status\n\nUżywaj tej komendy, gdy użytkownik chce tylko sprawdzić stan feature'a albo ustalić następny legalny krok.\n\n## Zasady\n- Uruchom \`${packageCommand} status [--feature <slug|id>]\`.\n- Jeśli CLI zwróci wybór feature'a, zapytaj użytkownika zamiast zgadywać.\n- Jeśli CLI zwróci \`nextContext\`, użyj tego tylko do raportowania stanu, a nie do samodzielnego przechodzenia dalej.\n- Ta komenda nie służy do redagowania dokumentów ani do odblokowywania checkpointów.\n`;
 }
 
+export function buildBootstrapProjectCursorCommandTemplate(
+  packageCommand = "npx simple-planning",
+): string {
+  return `# Bootstrap Project\n\nUżywaj tej komendy tylko wtedy, gdy użytkownik chce zbootstrapować istniejący projekt w Simple Planning.\n\n## Zasady\n- To nie jest komenda do greenfielda ani do zwykłego nowego feature'a.\n- Najpierw uruchom \`${packageCommand} bootstrap\`.\n- Jeśli CLI zatrzyma się z informacją, że \`product/01-vision.md\` jest puste albo zbyt krótkie, zatrzymaj się i poproś użytkownika o uzupełnienie sensownego seedu vision.\n- Jeśli CLI zwróci bundle dokumentów, redaguj je dokładnie w kolejności podanej w \`documents\`.\n- Używaj tylko \`targetPath\`, \`requiredFiles\` i \`prompt\` zwróconych przez CLI.\n- Po zaktualizowaniu bootstrapowego discovery uruchom \`discoveryPreparation.nextCommand\`, żeby oznaczyć discovery jako ukończone.\n- Po domknięciu bootstrapowego discovery zatrzymaj się i oddaj kontrolę użytkownikowi. Nie przechodź sam do product-spec.\n`;
+}
+
 export function getFeatureDocumentPaths(featureDir: string): Record<Step, string> {
   const entries = allSteps.map((step) => [
     step,

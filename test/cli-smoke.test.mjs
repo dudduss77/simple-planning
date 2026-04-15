@@ -35,6 +35,14 @@ async function writeMeaningfulDoc(filePath, title, section = "Treść") {
   );
 }
 
+async function writeVisionSeed(filePath, text) {
+  await fs.writeFile(
+    filePath,
+    `Status: draft\nOwner: test\nLast updated: 2026-04-13\n\n# Vision\n\n## Cel produktu\n${text}\n`,
+    "utf8",
+  );
+}
+
 test("init creates project skeleton and cursor command", async () => {
   const cwd = await createTempWorkspace();
 
@@ -63,9 +71,18 @@ test("init creates project skeleton and cursor command", async () => {
     fs.access(path.join(cwd, ".cursor", "commands", "feature-status.md")),
   );
   await assert.doesNotReject(() =>
+    fs.access(path.join(cwd, ".cursor", "commands", "bootstrap-project.md")),
+  );
+  await assert.doesNotReject(() =>
     fs.access(
       path.join(cwd, ".simple-planning", "commands", "Discovery.md"),
     ),
+  );
+  await assert.doesNotReject(() =>
+    fs.access(path.join(cwd, ".simple-planning", "commands", "Vision.md")),
+  );
+  await assert.doesNotReject(() =>
+    fs.access(path.join(cwd, ".simple-planning", "commands", "Roadmap.md")),
   );
 });
 
@@ -95,6 +112,10 @@ test("init copies dedicated cursor commands", async () => {
     path.join(cwd, ".cursor", "commands", "feature-status.md"),
     "utf8",
   );
+  const bootstrapCommandText = await fs.readFile(
+    path.join(cwd, ".cursor", "commands", "bootstrap-project.md"),
+    "utf8",
+  );
 
   assert.match(startCommandText, /npx simple-planning start --name <feature-name>/);
   assert.match(
@@ -104,6 +125,7 @@ test("init copies dedicated cursor commands", async () => {
   assert.match(continueCommandText, /npx simple-planning continue \[--feature <slug\|id>\]/);
   assert.match(workCommandText, /npx simple-planning work-on-current-step \[--feature <slug\|id>\]/);
   assert.match(statusCommandText, /npx simple-planning status \[--feature <slug\|id>\]/);
+  assert.match(bootstrapCommandText, /npx simple-planning bootstrap/);
 });
 
 test("list suggests start command when project has no features", async () => {
@@ -221,6 +243,135 @@ test("continue asks user when multiple active features are possible", async () =
     continueResult.parsed.data.suggestedCommand,
     /simple-planning continue --feature <slug\|id>/,
   );
+});
+
+test("bootstrap stops when vision is still a placeholder", async () => {
+  const cwd = await createTempWorkspace();
+
+  runCli(cwd, ["init"]);
+  const bootstrapResult = runCli(cwd, ["bootstrap"]);
+
+  assert.equal(bootstrapResult.status, 0);
+  assert.equal(bootstrapResult.parsed.ok, true);
+  assert.equal(bootstrapResult.parsed.agentAction, "stop_and_ask_user");
+  assert.match(bootstrapResult.parsed.message, /Bootstrap zatrzymany/i);
+  assert.equal(bootstrapResult.parsed.data.minimumMeaningfulCharacters, 500);
+});
+
+test("bootstrap prepares product docs and bootstrap discovery", async () => {
+  const cwd = await createTempWorkspace();
+
+  runCli(cwd, ["init"]);
+  const visionFile = path.join(
+    cwd,
+    ".simple-planning",
+    "planning",
+    "product",
+    "01-vision.md",
+  );
+  const roadmapFile = path.join(
+    cwd,
+    ".simple-planning",
+    "planning",
+    "product",
+    "02-roadmap.md",
+  );
+  const longVision = "To jest istniejący produkt do planowania prac i porządkowania wiedzy o projekcie. ".repeat(
+    10,
+  );
+  await writeVisionSeed(visionFile, longVision);
+
+  const bootstrapResult = runCli(cwd, ["bootstrap"]);
+  assert.equal(bootstrapResult.status, 0);
+  assert.equal(bootstrapResult.parsed.ok, true);
+  assert.equal(bootstrapResult.parsed.agentAction, "write_bootstrap_documents");
+  assert.equal(bootstrapResult.parsed.data.bootstrapMode, "existing-project");
+  assert.equal(bootstrapResult.parsed.data.featureSlug, "bootstrap");
+  assert.equal(bootstrapResult.parsed.data.activeStep, "discovery");
+  assert.equal(bootstrapResult.parsed.data.documents.length, 3);
+  assert.deepEqual(
+    bootstrapResult.parsed.data.documents.map((entry) => entry.id),
+    ["vision", "roadmap", "bootstrap-discovery"],
+  );
+  assert.equal(bootstrapResult.parsed.data.documents[0].targetPath, visionFile);
+  assert.equal(bootstrapResult.parsed.data.documents[1].targetPath, roadmapFile);
+  assert.equal(
+    bootstrapResult.parsed.data.documents[0].prompt.ref,
+    "@.simple-planning/commands/Vision.md",
+  );
+  assert.equal(
+    bootstrapResult.parsed.data.documents[1].prompt.ref,
+    "@.simple-planning/commands/Roadmap.md",
+  );
+  assert.equal(
+    bootstrapResult.parsed.data.discoveryPreparation.prompt.ref,
+    "@.simple-planning/commands/Discovery.md",
+  );
+  assert.match(
+    bootstrapResult.parsed.data.discoveryPreparation.nextCommand,
+    /simple-planning run discovery --feature bootstrap --complete/,
+  );
+
+  await assert.doesNotReject(() =>
+    fs.access(
+      path.join(
+        cwd,
+        ".simple-planning",
+        "planning",
+        "features",
+        "bootstrap",
+        "01-idea.md",
+      ),
+    ),
+  );
+  await assert.doesNotReject(() =>
+    fs.access(
+      path.join(
+        cwd,
+        ".simple-planning",
+        "planning",
+        "features",
+        "bootstrap",
+        "02-discovery.md",
+      ),
+    ),
+  );
+});
+
+test("bootstrap can refresh existing bootstrap feature after it was closed", async () => {
+  const cwd = await createTempWorkspace();
+
+  runCli(cwd, ["init"]);
+  const visionFile = path.join(
+    cwd,
+    ".simple-planning",
+    "planning",
+    "product",
+    "01-vision.md",
+  );
+  await writeVisionSeed(
+    visionFile,
+    "Produkt porządkuje wymagania, odkrycia i kolejne kroki w istniejącym systemie. ".repeat(
+      10,
+    ),
+  );
+
+  runCli(cwd, ["bootstrap"]);
+  runCli(cwd, [
+    "close-feature",
+    "--feature",
+    "bootstrap",
+    "--reason",
+    "obsolete",
+  ]);
+
+  const rerunResult = runCli(cwd, ["bootstrap"]);
+  assert.equal(rerunResult.status, 0);
+  assert.equal(rerunResult.parsed.ok, true);
+  assert.equal(rerunResult.parsed.data.featureSlug, "bootstrap");
+  assert.equal(rerunResult.parsed.data.featureStatus, "active");
+  assert.equal(rerunResult.parsed.data.closeReason, null);
+  assert.equal(rerunResult.parsed.data.activeStep, "discovery");
 });
 
 test("close-feature closes active feature and status reports closure", async () => {

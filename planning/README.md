@@ -20,9 +20,10 @@ W docelowym użyciu agent nie powinien polegać na ręcznym dołączaniu plików
 
 Zamiast tego:
 1. projekt jest inicjalizowany przez `simple-planning init`,
-2. nowy feature powstaje przez `simple-planning start --name ... --description ...`,
-3. kolejne etapy są prowadzone przede wszystkim przez `simple-planning continue`, `status` i `run <step>`,
-4. po każdym etapie od `discovery` dalej agent ma się zatrzymać i poprosić użytkownika o dalsze instrukcje.
+2. istniejący system można zbootstrapować przez `simple-planning bootstrap`,
+3. nowy feature powstaje przez `simple-planning start --name ... --description ...`,
+4. kolejne etapy są prowadzone przede wszystkim przez `simple-planning continue`, `status` i `run <step>`,
+5. po każdym etapie od `discovery` dalej agent ma się zatrzymać i poprosić użytkownika o dalsze instrukcje.
 
 ## Struktura repo
 
@@ -224,6 +225,9 @@ Stosujemy tryb bootstrap.
 ### Zasady bootstrapu
 
 Przy zasilaniu istniejącego projektu:
+- najpierw seedujemy `product/01-vision.md` ręcznie,
+- bootstrap zatrzymuje się, jeśli vision jest zbyt ubogie,
+- `simple-planning bootstrap` porządkuje vision, buduje roadmapę i tworzy specjalny feature `bootstrap`,
 - opisujemy aktualny stan zamiast rekonstruować pełną historię,
 - opieramy się na kodzie, istniejącej dokumentacji i wiedzy właściciela projektu,
 - możemy tworzyć `01-idea.md` retroaktywnie jako opis celu lub intencji istniejącej funkcjonalności,

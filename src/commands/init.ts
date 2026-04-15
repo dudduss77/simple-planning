@@ -16,6 +16,7 @@ import {
 } from "../lib/project-paths.js";
 import { ensureProjectIndex } from "../lib/state.js";
 import {
+  buildBootstrapProjectCursorCommandTemplate,
   buildCloseFeatureCursorCommandTemplate,
   buildContinueFeatureCursorCommandTemplate,
   buildFeatureStatusCursorCommandTemplate,
@@ -26,6 +27,8 @@ import {
 } from "../lib/templates.js";
 
 const guideFiles = [
+  "Vision.md",
+  "Roadmap.md",
   "Discovery.md",
   "ProductSpec.md",
   "MVP.md",
@@ -55,6 +58,10 @@ const cursorCommandFiles = [
   {
     filename: "feature-status.md",
     fallback: () => buildFeatureStatusCursorCommandTemplate(),
+  },
+  {
+    filename: "bootstrap-project.md",
+    fallback: () => buildBootstrapProjectCursorCommandTemplate(),
   },
 ] as const;
 

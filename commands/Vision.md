@@ -1,4 +1,6 @@
-Uporządkuj i dopracuj `product/01-vision.md` dla istniejącego projektu na podstawie seedu od człowieka, aktualnego stanu produktu oraz lokalnego kontekstu repo.
+# Vision
+
+Cel: Uporządkuj i dopracuj `product/01-vision.md` dla istniejącego projektu na podstawie seedu od człowieka, aktualnego stanu produktu oraz lokalnego kontekstu repo.
 
 Reguły:
 - Jeśli seed w `product/01-vision.md` jest zbyt ubogi, szkicowy albo nie pozwala opisać sensu produktu, zatrzymaj się i napisz tylko: `Brak wystarczającego seedu do przygotowania 01-vision.md.`

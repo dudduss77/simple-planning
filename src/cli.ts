@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { runBootstrapCommand } from "./commands/bootstrap.js";
 import { runCloseFeatureCommand } from "./commands/close-feature.js";
 import { runContinueCommand } from "./commands/continue.js";
 import { runIdeaCommand } from "./commands/idea.js";
@@ -23,6 +24,7 @@ function printHelp(): void {
 
 Commands:
   init
+  bootstrap
   start --name <feature-name> --description <text>
   close-feature --reason <reason> [--feature <slug|id>]
   continue [--feature <slug|id>]
@@ -49,6 +51,10 @@ async function main(): Promise<void> {
     switch (command) {
       case "init": {
         printResult(await runInitCommand(process.cwd()));
+        return;
+      }
+      case "bootstrap": {
+        printResult(await runBootstrapCommand({ cwd: process.cwd() }));
         return;
       }
       case "start": {

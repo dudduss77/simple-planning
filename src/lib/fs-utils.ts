@@ -55,13 +55,8 @@ export async function copyFileIfMissing(
   await fs.copyFile(sourcePath, targetPath);
 }
 
-export async function isDocumentMeaningful(filePath: string): Promise<boolean> {
-  if (!(await fileExists(filePath))) {
-    return false;
-  }
-
-  const contents = await fs.readFile(filePath, "utf8");
-  const stripped = contents
+export function extractMeaningfulDocumentText(contents: string): string {
+  return contents
     .replace(/\r/g, "")
     .split("\n")
     .map((line) => line.trim())
@@ -70,7 +65,29 @@ export async function isDocumentMeaningful(filePath: string): Promise<boolean> {
     .filter((line) => !line.startsWith("Owner:"))
     .filter((line) => !line.startsWith("Last updated:"))
     .filter((line) => !/^#/.test(line))
-    .filter((line) => !/^[-*]\s*$/.test(line));
+    .filter((line) => !/^[-*]\s*$/.test(line))
+    .filter((line) => !/^[-*]\s*do uzupe[lł]nienia$/i.test(line))
+    .filter((line) => !/^do uzupe[lł]nienia$/i.test(line))
+    .join("\n")
+    .trim();
+}
 
-  return stripped.length > 0;
+export async function isDocumentMeaningful(filePath: string): Promise<boolean> {
+  if (!(await fileExists(filePath))) {
+    return false;
+  }
+
+  const contents = await fs.readFile(filePath, "utf8");
+  return extractMeaningfulDocumentText(contents).length > 0;
+}
+
+export async function getMeaningfulDocumentCharacterCount(
+  filePath: string,
+): Promise<number> {
+  if (!(await fileExists(filePath))) {
+    return 0;
+  }
+
+  const contents = await fs.readFile(filePath, "utf8");
+  return extractMeaningfulDocumentText(contents).length;
 }

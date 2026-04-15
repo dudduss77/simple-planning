@@ -28,6 +28,7 @@ export type AgentAction =
   | "show_status"
   | "show_next_step"
   | "prepare_next_step"
+  | "write_bootstrap_documents"
   | "write_document"
   | "step_completed"
   | "stop_and_ask_user"
@@ -143,6 +144,19 @@ export interface WorkflowPreparation {
   confirmedByUser: boolean;
 }
 
+export type BootstrapDocumentId =
+  | "vision"
+  | "roadmap"
+  | "bootstrap-discovery";
+
+export interface BootstrapDocumentTask {
+  id: BootstrapDocumentId;
+  title: string;
+  targetPath: string;
+  requiredFiles: string[];
+  prompt: PromptContext;
+}
+
 export interface FeatureSelectionData {
   selectionRequired: true;
   selectionReason: string;
@@ -160,6 +174,16 @@ export interface StartResultData extends FeatureWorkflowState {
   featureDirectory: string;
   ideaFile: string;
   preparation: WorkflowPreparation;
+}
+
+export interface BootstrapResultData extends FeatureWorkflowState {
+  bootstrapMode: "existing-project";
+  visionFile: string;
+  roadmapFile: string;
+  featureDirectory: string;
+  bootstrapIdeaFile: string;
+  documents: BootstrapDocumentTask[];
+  discoveryPreparation: WorkflowPreparation;
 }
 
 export interface ContinueResultData extends PrepareResultData {

@@ -8,14 +8,39 @@ import {
   getProjectCommandsRoot,
 } from "./project-paths.js";
 
+export function getCommandReference(filename: string): string {
+  return `@.simple-planning/commands/${filename}`;
+}
+
+export function getProjectCommandPath(cwd: string, filename: string): string {
+  return path.join(getProjectCommandsRoot(cwd), filename);
+}
+
+export async function getCommandText(
+  cwd: string,
+  filename: string,
+): Promise<string | null> {
+  const projectPath = getProjectCommandPath(cwd, filename);
+  if (await fileExists(projectPath)) {
+    return readTextFile(projectPath);
+  }
+
+  const packagePath = path.join(getCommandSourceRoot(), filename);
+  if (await fileExists(packagePath)) {
+    return readTextFile(packagePath);
+  }
+
+  return null;
+}
+
 export function getGuideReference(step: Step): string | null {
   const guide = stepDefinitions[step].commandGuide;
-  return guide ? `@.simple-planning/commands/${guide}` : null;
+  return guide ? getCommandReference(guide) : null;
 }
 
 export function getProjectGuidePath(cwd: string, step: Step): string | null {
   const guide = stepDefinitions[step].commandGuide;
-  return guide ? path.join(getProjectCommandsRoot(cwd), guide) : null;
+  return guide ? getProjectCommandPath(cwd, guide) : null;
 }
 
 export async function getGuideText(cwd: string, step: Step): Promise<string | null> {
@@ -24,15 +49,5 @@ export async function getGuideText(cwd: string, step: Step): Promise<string | nu
     return null;
   }
 
-  const projectPath = path.join(getProjectCommandsRoot(cwd), guide);
-  if (await fileExists(projectPath)) {
-    return readTextFile(projectPath);
-  }
-
-  const packagePath = path.join(getCommandSourceRoot(), guide);
-  if (await fileExists(packagePath)) {
-    return readTextFile(packagePath);
-  }
-
-  return null;
+  return getCommandText(cwd, guide);
 }

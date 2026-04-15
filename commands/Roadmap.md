@@ -1,4 +1,6 @@
-Utwórz lub zaktualizuj `product/02-roadmap.md` na podstawie `product/01-vision.md`, aktualnego stanu projektu i wiedzy właściciela produktu.
+# Roadmap
+
+Cel: Utwórz lub zaktualizuj `product/02-roadmap.md` na podstawie `product/01-vision.md`, aktualnego stanu projektu i wiedzy właściciela produktu.
 
 Reguły:
 - Jeśli `product/01-vision.md` nie istnieje albo nadal jest zbyt słabe, zatrzymaj się i napisz tylko: `Brak wystarczającego 01-vision.md do przygotowania 02-roadmap.md.`
