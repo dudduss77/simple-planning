@@ -8,5 +8,6 @@ Używaj tej komendy wtedy, gdy użytkownik chce dalej pracować nad aktualnym do
 - Jeśli CLI zwróci wybór feature'a, zapytaj użytkownika zamiast zgadywać.
 - Jeśli CLI poinformuje, że nie ma aktywnego kroku, zatrzymaj się i wskaż użytkownikowi `continue-feature` albo `feature-status`.
 - Użyj tylko `preparation.targetDocument`, `preparation.requiredFiles` i `preparation.prompt` zwróconych przez CLI.
-- Po zaktualizowaniu pliku docelowego wywołaj `preparation.nextCommand` zwrócone przez CLI tylko po to, by oznaczyć bieżący krok jako ukończony.
+- Po zaktualizowaniu pliku docelowego zatrzymaj się i oddaj kontrolę użytkownikowi.
+- Nie wywołuj `preparation.nextCommand`, chyba że użytkownik wyraźnie poprosi o zamknięcie bieżącego etapu.
 - Nie przechodź dalej tylko dlatego, że dokument jest już otwarty albo użytkownik dopisał nowe informacje.

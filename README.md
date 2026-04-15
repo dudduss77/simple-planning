@@ -213,8 +213,9 @@ Preferowany styl:
 1. Uruchom `simple-planning init`.
 2. Utwórz nowy feature przez `simple-planning start --name <feature-name> --description "<opis>"`.
 3. Pozwól agentowi zredagować przygotowany przez CLI etap `discovery`.
-4. Po każdym etapie od `discovery` dalej zatrzymaj się, przejrzyj dokument i dopiero wtedy każ agentowi iść dalej.
-5. Nie przechodź do `05-tech-spec`, jeśli nie ma jeszcze sensownego `03-product-spec.md` i `04-mvp.md`.
+4. Po redakcji bieżącego etapu zatrzymaj się; samo zredagowanie dokumentu nie powinno automatycznie zamykać kroku.
+5. Po każdym etapie od `discovery` dalej zatrzymaj się, przejrzyj dokument i dopiero wtedy każ agentowi iść dalej.
+6. Nie przechodź do `05-tech-spec`, jeśli nie ma jeszcze sensownego `03-product-spec.md` i `04-mvp.md`.
 
 ## Praca z istniejącym projektem
 
@@ -229,6 +230,7 @@ Przy zasilaniu istniejącego projektu:
 - najpierw człowiek seeduje `product/01-vision.md`,
 - `simple-planning bootstrap` zatrzymuje się, jeśli `01-vision.md` nie ma jeszcze sensownego materiału wejściowego,
 - bootstrap porządkuje `01-vision.md`, tworzy `02-roadmap.md` oraz specjalny feature `features/bootstrap/`,
+- po redakcji bootstrapowego `discovery` agent ma się zatrzymać, a nie domykać ten etap automatycznie,
 - opisujemy aktualny stan zamiast rekonstruować pełną historię,
 - opieramy się na kodzie, istniejącej dokumentacji i wiedzy właściciela projektu,
 - możemy tworzyć `01-idea.md` retroaktywnie jako opis celu lub intencji istniejącej funkcjonalności,
@@ -253,7 +255,7 @@ Celem bootstrapu jest doprowadzenie repo do stanu, w którym:
 - wiadomo jak to działa,
 - wiadomo czego brakuje,
 - wiadomo jak dalej rozwijać projekt w uporządkowany sposób.
-- a specjalny feature `bootstrap` kończy pierwszy przebieg na `02-discovery.md`, po czym dalsza praca wraca do zwykłego `work-on-current-step` albo `continue-feature`.
+- a specjalny feature `bootstrap` kończy pierwszy przebieg na przygotowaniu `02-discovery.md`, po czym dalsza praca wraca do zwykłego `work-on-current-step` albo `continue-feature`.
 
 ## Status dokumentów
 
