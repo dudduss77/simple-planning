@@ -1,4 +1,6 @@
 import crypto from "node:crypto";
+import fs from "node:fs/promises";
+import path from "node:path";
 
 import {
   allSteps,
@@ -23,6 +25,19 @@ import {
   getStateRoot,
 } from "./project-paths.js";
 import { getFeatureDocumentPaths } from "./templates.js";
+
+export const CURRENT_PROJECT_INDEX_VERSION = 2;
+export const CURRENT_FEATURE_STATE_VERSION = 2;
+
+type RawProjectIndex = Omit<ProjectIndex, "version" | "lastMigrationAt"> & {
+  version?: number;
+  lastMigrationAt?: string | null;
+};
+
+type RawFeatureState = Omit<FeatureState, "version" | "lastMigrationAt"> & {
+  version?: number;
+  lastMigrationAt?: string | null;
+};
 
 function nowIso(): string {
   return new Date().toISOString();
@@ -64,16 +79,22 @@ export async function ensureProjectIndex(cwd: string): Promise<ProjectIndex> {
   const indexPath = getIndexPath(cwd);
   if (!(await fileExists(indexPath))) {
     const initialIndex: ProjectIndex = {
-      version: 1,
+      version: CURRENT_PROJECT_INDEX_VERSION,
       initializedAt: nowIso(),
       updatedAt: nowIso(),
+      lastMigrationAt: null,
       features: [],
     };
     await writeJsonFile(indexPath, initialIndex);
     return initialIndex;
   }
 
-  return readJsonFile<ProjectIndex>(indexPath);
+  const migration = await readMigratedProjectIndex(indexPath);
+  if (migration.changed) {
+    await writeJsonFile(indexPath, migration.state);
+  }
+
+  return migration.state;
 }
 
 export async function saveProjectIndex(
@@ -106,12 +127,13 @@ export function createFeatureState(cwd: string, name: string): FeatureState {
   ) as Record<Step, DocumentRecord>;
 
   return {
-    version: 1,
+    version: CURRENT_FEATURE_STATE_VERSION,
     featureId,
     name,
     slug,
     createdAt: nowIso(),
     updatedAt: nowIso(),
+    lastMigrationAt: null,
     status: "active",
     closeReason: null,
     closedAt: null,
@@ -440,11 +462,163 @@ export async function loadFeatureState(
     );
   }
 
-  const state = await readJsonFile<FeatureState>(
-    getFeatureStatePath(cwd, resolution.feature.featureId),
-  );
+  const statePath = getFeatureStatePath(cwd, resolution.feature.featureId);
+  const migration = await readMigratedFeatureState(statePath);
+  if (migration.changed) {
+    await writeJsonFile(statePath, migration.state);
+  }
+
+  const state = migration.state;
   await refreshFeatureDocuments(state);
   return state;
+}
+
+function migrateProjectIndex(raw: RawProjectIndex): {
+  state: ProjectIndex;
+  changed: boolean;
+} {
+  const sourceVersion = raw.version ?? 1;
+  if (sourceVersion > CURRENT_PROJECT_INDEX_VERSION) {
+    throw new Error(
+      `Wykryto nowszą wersję index.json (${sourceVersion}) niż obsługiwana przez CLI (${CURRENT_PROJECT_INDEX_VERSION}).`,
+    );
+  }
+
+  let state: ProjectIndex = {
+    version: sourceVersion,
+    initializedAt: raw.initializedAt,
+    updatedAt: raw.updatedAt,
+    lastMigrationAt: raw.lastMigrationAt ?? null,
+    features: raw.features,
+  };
+  let changed = raw.version === undefined || raw.lastMigrationAt === undefined;
+
+  while (state.version < CURRENT_PROJECT_INDEX_VERSION) {
+    switch (state.version) {
+      case 1: {
+        state = {
+          ...state,
+          version: 2,
+          lastMigrationAt: nowIso(),
+        };
+        changed = true;
+        break;
+      }
+      default: {
+        throw new Error(`Brak migracji dla index.json v${state.version}.`);
+      }
+    }
+  }
+
+  return { state, changed };
+}
+
+function migrateFeatureState(raw: RawFeatureState): {
+  state: FeatureState;
+  changed: boolean;
+} {
+  const sourceVersion = raw.version ?? 1;
+  if (sourceVersion > CURRENT_FEATURE_STATE_VERSION) {
+    throw new Error(
+      `Wykryto nowszą wersję feature state (${sourceVersion}) niż obsługiwana przez CLI (${CURRENT_FEATURE_STATE_VERSION}).`,
+    );
+  }
+
+  let state: FeatureState = {
+    version: sourceVersion,
+    featureId: raw.featureId,
+    name: raw.name,
+    slug: raw.slug,
+    createdAt: raw.createdAt,
+    updatedAt: raw.updatedAt,
+    lastMigrationAt: raw.lastMigrationAt ?? null,
+    status: raw.status,
+    closeReason: raw.closeReason,
+    closedAt: raw.closedAt,
+    activeStep: raw.activeStep,
+    lastCompletedStep: raw.lastCompletedStep,
+    nextSuggestedStep: raw.nextSuggestedStep,
+    awaitingUserConfirmation: raw.awaitingUserConfirmation,
+    awaitingAfterStep: raw.awaitingAfterStep,
+    documents: raw.documents,
+  };
+  let changed = raw.version === undefined || raw.lastMigrationAt === undefined;
+
+  while (state.version < CURRENT_FEATURE_STATE_VERSION) {
+    switch (state.version) {
+      case 1: {
+        state = {
+          ...state,
+          version: 2,
+          lastMigrationAt: nowIso(),
+        };
+        changed = true;
+        break;
+      }
+      default: {
+        throw new Error(`Brak migracji dla feature state v${state.version}.`);
+      }
+    }
+  }
+
+  return { state, changed };
+}
+
+async function readMigratedProjectIndex(indexPath: string): Promise<{
+  state: ProjectIndex;
+  changed: boolean;
+}> {
+  const raw = await readJsonFile<RawProjectIndex>(indexPath);
+  return migrateProjectIndex(raw);
+}
+
+async function readMigratedFeatureState(statePath: string): Promise<{
+  state: FeatureState;
+  changed: boolean;
+}> {
+  const raw = await readJsonFile<RawFeatureState>(statePath);
+  return migrateFeatureState(raw);
+}
+
+export async function migrateProjectStateFiles(cwd: string): Promise<{
+  migratedIndex: boolean;
+  migratedFeatureStates: string[];
+}> {
+  await ensureProjectSkeleton(cwd);
+
+  const indexPath = getIndexPath(cwd);
+  let migratedIndex = false;
+  if (await fileExists(indexPath)) {
+    const indexMigration = await readMigratedProjectIndex(indexPath);
+    if (indexMigration.changed) {
+      await writeJsonFile(indexPath, indexMigration.state);
+      migratedIndex = true;
+    }
+  }
+
+  const featureStateRoot = getFeatureStateRoot(cwd);
+  const migratedFeatureStates: string[] = [];
+  if (!(await fileExists(featureStateRoot))) {
+    return { migratedIndex, migratedFeatureStates };
+  }
+
+  const entries = await fs.readdir(featureStateRoot, { withFileTypes: true });
+  for (const entry of entries) {
+    if (!entry.isFile() || path.extname(entry.name) !== ".json") {
+      continue;
+    }
+
+    const statePath = path.join(featureStateRoot, entry.name);
+    const stateMigration = await readMigratedFeatureState(statePath);
+    if (!stateMigration.changed) {
+      continue;
+    }
+
+    await writeJsonFile(statePath, stateMigration.state);
+    migratedFeatureStates.push(statePath);
+  }
+
+  return { migratedIndex, migratedFeatureStates };
 }
 
 export async function refreshFeatureDocuments(state: FeatureState): Promise<void> {

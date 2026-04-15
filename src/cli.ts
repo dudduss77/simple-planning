@@ -9,6 +9,7 @@ import { runNextCommand } from "./commands/next.js";
 import { runStepCommand } from "./commands/run.js";
 import { runStartCommand } from "./commands/start.js";
 import { runStatusCommand } from "./commands/status.js";
+import { runUpdateCommand } from "./commands/update.js";
 import { runWorkOnCurrentStepCommand } from "./commands/work-on-current-step.js";
 import {
   booleanFlag,
@@ -24,6 +25,7 @@ function printHelp(): void {
 
 Commands:
   init
+  update
   bootstrap
   start --name <feature-name> --description <text>
   close-feature --reason <reason> [--feature <slug|id>]
@@ -55,6 +57,10 @@ async function main(): Promise<void> {
       }
       case "bootstrap": {
         printResult(await runBootstrapCommand({ cwd: process.cwd() }));
+        return;
+      }
+      case "update": {
+        printResult(await runUpdateCommand(process.cwd()));
         return;
       }
       case "start": {
