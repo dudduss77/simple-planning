@@ -13,6 +13,7 @@ import {
   getPlanningSourceRoot,
   getProjectCommandsRoot,
   getProductRoot,
+  getSimplePlanningRoot,
 } from "../lib/project-paths.js";
 import { ensureProjectIndex } from "../lib/state.js";
 import {
@@ -71,6 +72,7 @@ export async function runInitCommand(cwd: string): Promise<CommandResult> {
   const planningRoot = getPlanningRoot(cwd);
   const productRoot = getProductRoot(cwd);
   const commandsRoot = getProjectCommandsRoot(cwd);
+  const simplePlanningRoot = getSimplePlanningRoot(cwd);
   const planningSourceRoot = getPlanningSourceRoot();
   const commandSourceRoot = getCommandSourceRoot();
 
@@ -84,6 +86,10 @@ export async function runInitCommand(cwd: string): Promise<CommandResult> {
     copyFileIfMissing(
       path.join(planningSourceRoot, "README.md"),
       path.join(planningRoot, "README.md"),
+    ),
+    copyFileIfMissing(
+      path.join(planningSourceRoot, "AGENTS.md"),
+      path.join(simplePlanningRoot, "AGENTS.md"),
     ),
     copyFileIfMissing(
       path.join(planningSourceRoot, "product", "README.md"),

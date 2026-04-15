@@ -56,6 +56,9 @@ test("init creates project skeleton and cursor command", async () => {
     fs.access(path.join(cwd, ".simple-planning", "state", "index.json")),
   );
   await assert.doesNotReject(() =>
+    fs.access(path.join(cwd, ".simple-planning", "AGENTS.md")),
+  );
+  await assert.doesNotReject(() =>
     fs.access(path.join(cwd, ".cursor", "commands", "start-feature.md")),
   );
   await assert.doesNotReject(() =>
