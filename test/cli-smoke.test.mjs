@@ -625,6 +625,75 @@ test("continue resumes checkpoint for the single feature awaiting confirmation",
   );
 });
 
+test("continue completes meaningful active step and prepares next without run --complete", async () => {
+  const cwd = await createTempWorkspace();
+
+  runCli(cwd, ["init"]);
+  runCli(cwd, [
+    "start",
+    "--name",
+    "Feature Alpha",
+    "--description",
+    "Opis idei.",
+  ]);
+
+  const discoveryFile = path.join(
+    cwd,
+    ".simple-planning",
+    "planning",
+    "features",
+    "feature-alpha",
+    "02-discovery.md",
+  );
+  await writeMeaningfulDoc(discoveryFile, "Discovery", "Co już istnieje");
+
+  const continueResult = runCli(cwd, [
+    "continue",
+    "--feature",
+    "feature-alpha",
+  ]);
+  assert.equal(continueResult.status, 0);
+  assert.equal(continueResult.parsed.ok, true);
+  assert.equal(continueResult.parsed.agentAction, "write_document");
+  assert.equal(continueResult.parsed.stopReason, "none");
+  assert.equal(continueResult.parsed.data.resumedFromCheckpoint, true);
+  assert.equal(continueResult.parsed.data.activeStep, "product-spec");
+  assert.equal(continueResult.parsed.data.preparation.step, "product-spec");
+  assert.match(
+    continueResult.parsed.message,
+    /Domknięto etap 'discovery' i przygotowano etap 'product-spec'/,
+  );
+});
+
+test("continue does not auto-complete when active document is not meaningful", async () => {
+  const cwd = await createTempWorkspace();
+
+  runCli(cwd, ["init"]);
+  runCli(cwd, [
+    "start",
+    "--name",
+    "Feature Alpha",
+    "--description",
+    "Opis idei.",
+  ]);
+
+  const continueResult = runCli(cwd, [
+    "continue",
+    "--feature",
+    "feature-alpha",
+  ]);
+  assert.equal(continueResult.status, 0);
+  assert.equal(continueResult.parsed.ok, true);
+  assert.equal(continueResult.parsed.agentAction, "write_document");
+  assert.equal(continueResult.parsed.data.resumedFromCheckpoint, false);
+  assert.equal(continueResult.parsed.data.activeStep, "discovery");
+  assert.equal(continueResult.parsed.data.preparation.step, "discovery");
+  assert.match(
+    continueResult.parsed.message,
+    /Wznowiono aktywny etap 'discovery'/,
+  );
+});
+
 test("update shows managed files and overwrites them after confirmation", async () => {
   const cwd = await createTempWorkspace();
 
