@@ -4,6 +4,7 @@ import {
   type FeatureSelectionData,
   type PrepareResultData,
 } from "../lib/contracts.js";
+import { isDocumentMeaningful } from "../lib/fs-utils.js";
 import { loadFeatureState, resolveFeatureSelection } from "../lib/state.js";
 import { runStepCommand } from "./run.js";
 
@@ -118,6 +119,56 @@ export async function runContinueCommand(args: {
           } satisfies ContinueResultData)
         : result.data,
     };
+  }
+
+  if (state.activeStep) {
+    const activeDocPath = state.documents[state.activeStep].path;
+    if (await isDocumentMeaningful(activeDocPath)) {
+      const completedStep = state.activeStep;
+      const completeResult = await runStepCommand({
+        cwd: args.cwd,
+        stepRaw: completedStep,
+        feature: state.slug,
+        complete: true,
+        confirmedByUser: false,
+      });
+
+      const stateAfter = await loadFeatureState(args.cwd, state.slug);
+
+      if (!stateAfter.nextSuggestedStep) {
+        return {
+          ok: completeResult.ok,
+          command: "continue",
+          message: `Domknięto etap '${completedStep}' dla feature'a '${state.slug}'. ${completeResult.message}`,
+          agentAction: completeResult.agentAction,
+          stopReason: completeResult.stopReason,
+          data: completeResult.data,
+        };
+      }
+
+      const prepareResult = await runStepCommand({
+        cwd: args.cwd,
+        stepRaw: stateAfter.nextSuggestedStep,
+        feature: stateAfter.slug,
+        complete: false,
+        confirmedByUser: stateAfter.awaitingUserConfirmation,
+      });
+      const prepareData = prepareResult.data as PrepareResultData | undefined;
+
+      return {
+        ok: prepareResult.ok,
+        command: "continue",
+        message: `Domknięto etap '${completedStep}' i przygotowano etap '${stateAfter.nextSuggestedStep}' dla feature'a '${state.slug}'.`,
+        agentAction: prepareResult.agentAction,
+        stopReason: prepareResult.stopReason,
+        data: prepareData
+          ? ({
+              ...prepareData,
+              resumedFromCheckpoint: true,
+            } satisfies ContinueResultData)
+          : prepareResult.data,
+      };
+    }
   }
 
   const stepToPrepare = state.activeStep ?? state.nextSuggestedStep;
