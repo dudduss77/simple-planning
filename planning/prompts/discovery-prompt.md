@@ -7,6 +7,7 @@ Reguły:
 - Nie twórz architektury technicznej.
 - Nie twórz tasków.
 - Nie opisuj szczegółowych rozwiązań implementacyjnych.
+- Jeśli musisz zadawać pytania do użytkownika przed lub w trakcie redakcji, stosuj pełne zasady z `commands/Discovery.md` (kontekst, zakotwiczenie w sekcjach discovery, `blokujące` / `doprecyzowujące`, format pytań wyboru).
 
 `02-discovery.md` musi zawierać:
 - pytania otwarte,
