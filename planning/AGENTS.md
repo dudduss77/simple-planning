@@ -109,6 +109,7 @@ Agent ma wykonywać tylko zakres wynikający z uruchomionej komendy i odpowiedzi
 `start-feature` ma tylko przygotować pierwszy etap i zostawić go otwartego.
 `work-on-current-step` ma tylko redagować aktualny dokument i nie może sam domykać etapu bez jawnej prośby użytkownika.
 `continue-feature` może domknąć wznowiony aktywny etap, ale jeśli po checkpointcie dopiero przygotowuje kolejny etap, ma go zostawić otwartego.
+Po domknięciu głównego etapu `tasks` kolejne legalne kroki to `07-decision-log.md`, potem `08-parking-lot.md` — ten sam `continue` / `continue-feature` przygotuje je **po kolei** (jeden plik na jedno wywołanie); można zamiast tego użyć jawnego `run decision-log` / `run parking-lot`. Nie łącz obu plików w jednej turze agenta bez wyraźnej prośby użytkownika.
 `bootstrap-project` podlega tej samej zasadzie: bootstrapowe `discovery` po redakcji ma pozostać otwarte, dopóki użytkownik jawnie nie zdecyduje o dalszym kroku.
 Agent nie ma sam przechodzić do kolejnych etapów bez jawnego użycia komendy kontynuacji.
 Agent nie ma sam zamykać feature'a jako efektu ubocznego redakcji dokumentu; zamknięcie wymaga jawnej komendy.

@@ -23,6 +23,7 @@ Docelowy sposób użycia workflow to CLI:
 3. Używaj małych komend Cursor: `.cursor/commands/bootstrap-project.md`, `.cursor/commands/start-feature.md`, `.cursor/commands/close-feature.md`, `.cursor/commands/work-on-current-step.md`, `.cursor/commands/continue-feature.md` i `.cursor/commands/feature-status.md`.
 4. Pozwól agentowi sterować kolejnymi etapami przez `simple-planning bootstrap`, `start`, `close-feature`, `work-on-current-step`, `continue`, `status`, `idea` i `run`.
 5. CLI zwraca też pełny prompt tekstowy dla etapu oraz referencję, np. `@.simple-planning/commands/Discovery.md`, żeby agent nie musiał dodatkowo czytać pliku, ale użytkownik nadal widział źródło instrukcji.
+6. Po ukończeniu głównego etapu `tasks` kolejne kroki to `decision-log` i `parking-lot`; `continue` przygotuje `07` i `08` po kolei (jeden plik na jedno wywołanie), chyba że użyjesz jawnego `run decision-log` / `run parking-lot`.
 
 W repo źródłowym folder `commands/` jest źródłem promptów używanych przez CLI, w tym promptów bootstrapowych `Vision.md` i `Roadmap.md`. Po `simple-planning init` projekt dostaje własny folder `.simple-planning/commands/`, więc lokalne zmiany promptów są respektowane i nie są hardcoded w kodzie.
 

@@ -4,6 +4,7 @@ import {
   sideSteps,
   type FeatureState,
   type MainStep,
+  type SideStep,
   type Step,
   type StepDefinition,
 } from "./contracts.js";
@@ -90,6 +91,20 @@ export function getNextMainStep(state: FeatureState): MainStep | null {
   }
 
   return null;
+}
+
+export function getNextIncompleteSideStep(state: FeatureState): SideStep | null {
+  for (const step of sideSteps) {
+    if (!state.documents[step].completed) {
+      return step;
+    }
+  }
+
+  return null;
+}
+
+export function getNextSuggestedStep(state: FeatureState): Step | null {
+  return getNextMainStep(state) ?? getNextIncompleteSideStep(state);
 }
 
 export function getTargetFilename(step: Step): string {

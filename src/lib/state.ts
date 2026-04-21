@@ -13,7 +13,7 @@ import {
   type Step,
 } from "./contracts.js";
 import { ensureDirectory, fileExists, readJsonFile, writeJsonFile } from "./fs-utils.js";
-import { getNextMainStep } from "./pipeline.js";
+import { getNextSuggestedStep } from "./pipeline.js";
 import {
   getFeatureDirectory,
   getFeatureStatePath,
@@ -647,7 +647,7 @@ export function markCompleted(state: FeatureState, step: Step): void {
   state.documents[step].exists = true;
   state.documents[step].completed = true;
   state.documents[step].lastCompletedAt = completedAt;
-  state.nextSuggestedStep = getNextMainStep(state);
+  state.nextSuggestedStep = getNextSuggestedStep(state);
 }
 
 export function clearAwaitingUserConfirmation(state: FeatureState): void {

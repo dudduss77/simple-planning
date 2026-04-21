@@ -66,7 +66,7 @@ export interface FeatureSummary {
   closedAt: string | null;
   activeStep: Step | null;
   lastCompletedStep: Step | null;
-  nextSuggestedStep: MainStep | null;
+  nextSuggestedStep: Step | null;
   awaitingUserConfirmation: boolean;
   awaitingAfterStep: Step | null;
   updatedAt: string;
@@ -93,7 +93,7 @@ export interface FeatureState {
   closedAt: string | null;
   activeStep: Step | null;
   lastCompletedStep: Step | null;
-  nextSuggestedStep: MainStep | null;
+  nextSuggestedStep: Step | null;
   awaitingUserConfirmation: boolean;
   awaitingAfterStep: Step | null;
   documents: Record<Step, DocumentRecord>;
@@ -143,7 +143,7 @@ export interface FeatureWorkflowState {
   closedAt: string | null;
   activeStep: Step | null;
   lastCompletedStep: Step | null;
-  nextSuggestedStep: MainStep | null;
+  nextSuggestedStep: Step | null;
   awaitingUserConfirmation: boolean;
   awaitingAfterStep: Step | null;
 }
@@ -206,7 +206,7 @@ export interface ContinueResultData extends PrepareResultData {
 export interface StatusResultData extends FeatureWorkflowState {
   documents: Record<Step, DocumentRecord>;
   nextContext: {
-    nextStep: MainStep | null;
+    nextStep: Step | null;
     prompt: PromptContext;
   };
 }
@@ -214,7 +214,7 @@ export interface StatusResultData extends FeatureWorkflowState {
 export interface StepCompletionData extends FeatureWorkflowState {
   completedStep: Step;
   nextContext: {
-    nextStep: MainStep | null;
+    nextStep: Step | null;
     prompt: PromptContext;
   };
   nextPromptRef: string | null;
