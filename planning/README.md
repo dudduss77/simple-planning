@@ -25,6 +25,8 @@ Zamiast tego:
 4. kolejne etapy są prowadzone przede wszystkim przez `simple-planning continue`, `status` i `run <step>`,
 5. po każdym etapie od `discovery` dalej agent ma się zatrzymać i poprosić użytkownika o dalsze instrukcje.
 
+Po ukończeniu głównego etapu `tasks` kolejne kroki w feature to `decision-log` i `parking-lot` (pliki `07` i `08`). `continue` przygotuje je po kolei — **jeden dokument na jedno wywołanie**; możesz też użyć `run decision-log` i `run parking-lot`.
+
 ## Struktura repo
 
 ```text

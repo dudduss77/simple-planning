@@ -6,6 +6,7 @@ Używaj tej komendy wtedy, gdy użytkownik chce kontynuować dokładnie jeden le
 - Uruchom `npx simple-planning continue [--feature <slug|id>]`.
 - Jeśli CLI zwróci wybór feature'a, zapytaj użytkownika zamiast zgadywać.
 - Jedno wywołanie `continue` może domknąć bieżący etap i od razu przygotować następny, gdy plik docelowy jest już uznany przez CLI za wystarczająco wypełniony (nie musisz wtedy osobno wołać `run <krok> --complete` przed kolejnym `continue`).
+- Po domknięciu głównego etapu `tasks` CLI przez ten sam `continue` kolejno przygotuje `07-decision-log.md`, a w osobnym wywołaniu `08-parking-lot.md` (jeden dokument na jedno `continue`); możesz też użyć `run decision-log` / `run parking-lot`.
 - Jeśli CLI wznowi aktywny etap albo odblokuje krok po checkpointcie, wykonaj dokładnie ten krok i nic więcej.
 - Użyj tylko `preparation.targetDocument`, `preparation.requiredFiles` i `preparation.prompt` zwróconych przez CLI.
 - Jeśli `resumedFromCheckpoint` jest `true`, potraktuj to jako przygotowanie nowego etapu: zredaguj dokument i zatrzymaj się bez wywoływania `preparation.nextCommand`.

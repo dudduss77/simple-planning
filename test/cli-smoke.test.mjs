@@ -811,3 +811,145 @@ test("update migrates existing state files without losing feature data", async (
   assert.equal(typeof migratedFeatureState.lastMigrationAt, "string");
   assert.equal(migratedFeatureState.slug, "feature-gamma");
 });
+
+test("continue after tasks prepares decision-log (side step)", async () => {
+  const cwd = await createTempWorkspace();
+  const slug = "side-flow";
+  const featureDir = path.join(
+    cwd,
+    ".simple-planning",
+    "planning",
+    "features",
+    slug,
+  );
+
+  runCli(cwd, ["init"]);
+  runCli(cwd, [
+    "start",
+    "--name",
+    "Side Flow",
+    "--description",
+    "Przepływ testowy side steps.",
+  ]);
+
+  const docNames = {
+    discovery: "02-discovery.md",
+    "product-spec": "03-product-spec.md",
+    mvp: "04-mvp.md",
+    "tech-spec": "05-tech-spec.md",
+    tasks: "06-tasks.md",
+  };
+
+  const mainThroughTech = ["discovery", "product-spec", "mvp", "tech-spec"];
+  for (const step of mainThroughTech) {
+    await writeMeaningfulDoc(
+      path.join(featureDir, docNames[step]),
+      step,
+      "Sekcja",
+    );
+    runCli(cwd, ["run", step, "--feature", slug, "--complete"]);
+    runCli(cwd, ["continue", "--feature", slug]);
+  }
+
+  await writeMeaningfulDoc(
+    path.join(featureDir, docNames.tasks),
+    "tasks",
+    "Sekcja",
+  );
+  runCli(cwd, ["run", "tasks", "--feature", slug, "--complete"]);
+
+  const afterTasksContinue = runCli(cwd, ["continue", "--feature", slug]);
+
+  assert.equal(afterTasksContinue.status, 0);
+  assert.equal(afterTasksContinue.parsed.ok, true);
+  assert.equal(afterTasksContinue.parsed.agentAction, "write_document");
+  assert.equal(afterTasksContinue.parsed.data.resumedFromCheckpoint, true);
+  assert.equal(afterTasksContinue.parsed.data.preparation.step, "decision-log");
+  assert.equal(
+    afterTasksContinue.parsed.data.preparation.prompt.ref,
+    "@.simple-planning/commands/DecisionLog.md",
+  );
+});
+
+test("continue after parking-lot --complete clears checkpoint and completes workflow", async () => {
+  const cwd = await createTempWorkspace();
+  const slug = "end-flow";
+  const featureDir = path.join(
+    cwd,
+    ".simple-planning",
+    "planning",
+    "features",
+    slug,
+  );
+
+  runCli(cwd, ["init"]);
+  runCli(cwd, [
+    "start",
+    "--name",
+    "End Flow",
+    "--description",
+    "Końcówka pipeline.",
+  ]);
+
+  const mainSteps = [
+    "discovery",
+    "product-spec",
+    "mvp",
+    "tech-spec",
+    "tasks",
+  ];
+  const docNames = {
+    discovery: "02-discovery.md",
+    "product-spec": "03-product-spec.md",
+    mvp: "04-mvp.md",
+    "tech-spec": "05-tech-spec.md",
+    tasks: "06-tasks.md",
+  };
+
+  for (const step of mainSteps) {
+    await writeMeaningfulDoc(
+      path.join(featureDir, docNames[step]),
+      step,
+      "Sekcja",
+    );
+    runCli(cwd, ["run", step, "--feature", slug, "--complete"]);
+    runCli(cwd, ["continue", "--feature", slug]);
+  }
+
+  await writeMeaningfulDoc(
+    path.join(featureDir, "07-decision-log.md"),
+    "Decision Log",
+    "Decyzje",
+  );
+  runCli(cwd, ["run", "decision-log", "--feature", slug, "--complete"]);
+  runCli(cwd, ["continue", "--feature", slug]);
+
+  const parkingFile = path.join(featureDir, "08-parking-lot.md");
+  await writeMeaningfulDoc(parkingFile, "Parking Lot", "Pomysły");
+
+  const completeParking = runCli(cwd, [
+    "run",
+    "parking-lot",
+    "--feature",
+    slug,
+    "--complete",
+  ]);
+  assert.equal(completeParking.status, 0);
+  assert.equal(completeParking.parsed.agentAction, "stop_and_ask_user");
+  assert.equal(
+    completeParking.parsed.stopReason,
+    "awaiting_user_confirmation",
+  );
+
+  const finishContinue = runCli(cwd, ["continue", "--feature", slug]);
+  assert.equal(finishContinue.status, 0);
+  assert.equal(finishContinue.parsed.ok, true);
+  assert.equal(finishContinue.parsed.agentAction, "pipeline_complete");
+  assert.equal(finishContinue.parsed.stopReason, "pipeline_completed");
+  assert.match(
+    finishContinue.parsed.message,
+    /wszystkie etapy workflow są domknięte/i,
+  );
+  assert.equal(finishContinue.parsed.data.awaitingUserConfirmation, false);
+  assert.equal(finishContinue.parsed.data.nextSuggestedStep, null);
+});

@@ -5,7 +5,14 @@ import {
   type PrepareResultData,
 } from "../lib/contracts.js";
 import { isDocumentMeaningful } from "../lib/fs-utils.js";
-import { loadFeatureState, resolveFeatureSelection } from "../lib/state.js";
+import { getNextSuggestedStep } from "../lib/pipeline.js";
+import {
+  clearAwaitingUserConfirmation,
+  loadFeatureState,
+  resolveFeatureSelection,
+  saveFeatureState,
+  syncFeatureSummary,
+} from "../lib/state.js";
 import { runStepCommand } from "./run.js";
 
 export async function runContinueCommand(args: {
@@ -94,6 +101,19 @@ export async function runContinueCommand(args: {
   }
 
   const state = await loadFeatureState(args.cwd, selection.feature.slug);
+
+  if (
+    state.awaitingUserConfirmation &&
+    !state.activeStep &&
+    !state.nextSuggestedStep
+  ) {
+    const inferredNext = getNextSuggestedStep(state);
+    if (inferredNext !== null) {
+      state.nextSuggestedStep = inferredNext;
+      await saveFeatureState(args.cwd, state);
+      await syncFeatureSummary(args.cwd, state);
+    }
+  }
 
   if (state.awaitingUserConfirmation && state.nextSuggestedStep) {
     const result = await runStepCommand({
@@ -200,10 +220,38 @@ export async function runContinueCommand(args: {
     };
   }
 
+  if (
+    state.awaitingUserConfirmation &&
+    !state.nextSuggestedStep &&
+    !state.activeStep
+  ) {
+    clearAwaitingUserConfirmation(state);
+    await saveFeatureState(args.cwd, state);
+    await syncFeatureSummary(args.cwd, state);
+
+    return {
+      ok: true,
+      command: "continue",
+      message: `Feature '${state.slug}' — wszystkie etapy workflow są domknięte.`,
+      agentAction: "pipeline_complete",
+      stopReason: "pipeline_completed",
+      data: {
+        featureId: state.featureId,
+        featureName: state.name,
+        featureSlug: state.slug,
+        activeStep: null,
+        lastCompletedStep: state.lastCompletedStep,
+        nextSuggestedStep: null,
+        awaitingUserConfirmation: false,
+        awaitingAfterStep: null,
+      },
+    };
+  }
+
   return {
     ok: true,
     command: "continue",
-    message: `Feature '${state.slug}' nie ma kolejnego legalnego kroku. Główny pipeline jest domknięty.`,
+    message: `Feature '${state.slug}' nie ma kolejnego legalnego etapu. Workflow jest domknięty.`,
     agentAction: "pipeline_complete",
     stopReason: "pipeline_completed",
     data: {
