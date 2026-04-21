@@ -69,16 +69,23 @@ Jeśli użyto researchu zewnętrznego:
 - nie zamieniaj discovery w notatkę z researchu.
 
 Jeśli musisz zadać pytania:
+- zanim zapytasz użytkownika, przejdź priorytet źródeł: jawne ustalenia właściciela → bardziej źródłowe dokumenty w repo → kod i aktualne zachowanie → dopiero wtedy pytanie (zgodnie z `planning/AGENTS.md`),
 - zadawaj tylko pytania, które realnie wpływają na wynik `02-discovery.md`,
 - grupuj je w małe partie, maksymalnie 3-5 naraz,
-- przy każdym pytaniu podaj jedno krótkie zdanie kontekstu:
-  - czego dotyczy,
-  - po co to pytanie,
-  - co zmieni odpowiedź.
+- każde pytanie zakotwicz w konkretnym miejscu analizy: wskaż, czy dotyczy `Luki informacyjne`, `Ryzyka`, `Sprzeczności`, `Alternatywnego kierunku` albo `Punktu wymagającego decyzji`, i dlaczego nie da się tego wiarygodnie domknąć z kodu, dokumentów albo researchu,
+- przy każdym pytaniu podaj krótki blok kontekstu (2-4 zdania, nadal konkretnie):
+  - o co chodzi i co już wiemy albo co ze sobą koliduje,
+  - czego dotyczy pytanie i po co jest zadane,
+  - co w `02-discovery.md` zmieni odpowiedź (którą sekcję doprecyzuje albo co usunie z list otwartych),
+- jeśli pytanie jest w stylu wyboru (kilka opcji albo „tak/nie” z istotnymi konsekwencjami):
+  - dla każdej sensownej opcji podaj krótki opis (kiedy opcja ma sens),
+  - przy każdej opcji: główna zaleta i główna wada (trade-off),
+  - na końcu możesz podać **wstępną rekomendację** opartą na znanych faktach i ryzykach — to tylko podpowiedź analityczna na etapie discovery, nie decyzja właściciela i nie zastępuje jawnego rozstrzygnięcia w dokumencie,
 - oznacz pytania jako:
-  - `blokujące` — bez odpowiedzi nie da się sensownie domknąć discovery,
-  - `doprecyzowujące` — poprawiają jakość discovery, ale nie blokują przejścia dalej.
-- nie zadawaj pytań, jeśli odpowiedź można wiarygodnie ustalić z kodu, dokumentów albo researchu.
+  - `blokujące` — bez odpowiedzi nie da się sensownie domknąć discovery; takie kwestie mają trafić do `Pytania otwarte` w pliku i mogą później zatrzymać przygotowanie `03-product-spec.md`,
+  - `doprecyzowujące` — poprawiają jakość discovery, ale nie blokują przejścia dalej,
+- nie zadawaj pytań, jeśli odpowiedź można wiarygodnie ustalić z kodu, dokumentów albo researchu,
+- po uzyskaniu odpowiedzi przenieś ustalenia do odpowiednich sekcji `02-discovery.md` (fakty vs założenia vs otwarte pytania), zamiast zostawiać wiedzę tylko w wątku czatu.
 
 Preferowany styl:
 - krótkie sekcje,
