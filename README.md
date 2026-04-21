@@ -1,24 +1,12 @@
 # Project Docs Workflow
 
-To repo służy do uporządkowanego rozwijania produktu i funkcjonalności z pomocą AI.
-Jest też źródłem pakietu CLI `simple-planning`, który przenosi ten workflow do innych projektów bez ręcznego kopiowania folderów.
+> **To jest eksperyment na prywatne potrzeby** — nie obiecuję stabilnego API ani długiego wsparcia. Kod jest na **MIT** (`LICENSE`); jeśli forma Ci pasuje, możesz forkować i prowadzić własną wersję. Zgłoszenia usterek: pole `bugs` / Issues repozytorium z `package.json`.
 
-Celem nie jest tworzenie „ładnej dokumentacji”, tylko utrzymywanie jednego, spójnego procesu:
-- od pomysłu,
-- przez doprecyzowanie i decyzje,
-- do MVP,
-- architektury,
-- i listy zadań do wdrożenia.
+**simple-planning** to małe CLI (**Node.js 20+**, patrz `engines` w `package.json`), które **inicjalizuje szkielet planistyczny** w Twoim repozytorium (`product/`, `features/` pod `.simple-planning/planning/`) i **krok po kroku przygotowuje kolejne dokumenty** (discovery, MVP, tasks itd.), tak żeby praca z modelem AI była na stałych plikach zamiast na rozproszonych notatkach.
 
-Dokumenty są podzielone na dwa poziomy:
-- `product/` — rzeczy dotyczące całego produktu,
-- `features/` — rzeczy dotyczące konkretnej funkcjonalności.
+## Szybki start
 
-## Simple Planning CLI
-
-### Instalacja
-
-Pakiet przeznaczony jest do użycia jako zależność narzędziowa w projekcie docelowym (**Node.js 20+**, patrz `engines` w `package.json`).
+Zależność deweloperska (zalecane — stała wersja w projekcie):
 
 ```bash
 pnpm add -D simple-planning
@@ -28,13 +16,31 @@ pnpm add -D simple-planning
 npm install --save-dev simple-planning
 ```
 
-Inicjalizacja workflow w bieżącym repozytorium:
+Bez instalacji w `package.json` — jednorazowo lub do wypróbowania:
 
 ```bash
 npx simple-planning init
 ```
 
-Kod jest na licencji **MIT** (`LICENSE`). Zgłoszenia usterek: przez pole `bugs` / Issues w repozytorium z `package.json`.
+Po instalacji lokalnej wywołujesz ten sam binarz jako `pnpm exec simple-planning …` / `npx simple-planning …` albo przez skrypt — w przykładach poniżej zostaje prefix `npx`, żeby działało w obu wariantach.
+
+## Przykładowy flow (jeden konkretny przebieg)
+
+1. W katalogu repozytorium: **`npx simple-planning init`** — powstaje m.in. `.simple-planning/planning/` (dokumenty), `.simple-planning/commands/` (prompty dla CLI), **`.cursor/commands/`** (skróty pod Cursor).
+2. Ustal kontekst produktu (wizja, roadmapę): **`npx simple-planning bootstrap`** — CLI przygotuje kolejne pliki i podpowie, co otworzyć w edytorze.
+3. Nowa funkcjonalność: **`npx simple-planning start nazwa-feature`** — zakłada feature i od razu przygotowuje etap discovery.
+4. Dalej bez uruchamiania „wszystkiego naraz”: **`npx simple-planning work-on-current-step`** lub **`npx simple-planning continue`** — przejście przez checkpointy kolejnych dokumentów (`status`, `next`, `list` pomagają orientacji).
+
+Szczegóły etapów i dobrych praktyk z AI są niżej w tym pliku („Kolejność pracy”, „Jak pracować z AI”).
+
+## Dlaczego paczka npm zawiera też `planning/` i `.cursor/commands/`
+
+Instalacja z npm to nie tylko skompilowany **`dist/`** — w `files` pakietu są też **`planning/`**, **`commands/`** i **`.cursor/commands/`** (zob. `package.json`). Krótko po co:
+
+- **`planning/`** — kanoniczny szablon (przykładowe `product/`, przykładowy feature, prompty pomocnicze). `init` kopiuje z niego strukturę do **`.simple-planning/planning/`** w Twoim projekcie, żeby nie trzeba było klonować całego repo-szablonu ani składać folderów ręcznie.
+- **`.cursor/commands/`** — gotowe, wersjonowane razem z CLI **komendy Cursor** (markdown), żeby w edytorze mieć te same instrukcje co w terminalu, bez kopiowania ich z dokumentacji.
+
+Dodatkowo folder **`commands/`** w paczce to źródło promptów, z którego po `init` powstaje **`.simple-planning/commands/`** u Ciebie — lokalne zmiany promptów zostają w repozytorium docelowym, a npm dostarcza tylko punkt wyjścia zgodny z wersją CLI.
 
 ### Rozwój źródeł CLI (ten repo)
 
@@ -47,18 +53,9 @@ pnpm test
 
 Przed publikacją warto sprawdzić paczkę: `npm publish --dry-run` (przed pakowaniem uruchomi się skrypt `prepack` → budowa `dist/`).
 
-Docelowy sposób użycia workflow to CLI:
-
-1. Zainstaluj pakiet w projekcie (jak wyżej).
-2. Uruchom `simple-planning init`.
-3. Używaj małych komend Cursor: `.cursor/commands/bootstrap-project.md`, `.cursor/commands/start-feature.md`, `.cursor/commands/close-feature.md`, `.cursor/commands/work-on-current-step.md`, `.cursor/commands/continue-feature.md` i `.cursor/commands/feature-status.md`.
-4. Pozwól agentowi sterować kolejnymi etapami przez `simple-planning bootstrap`, `start`, `close-feature`, `work-on-current-step`, `continue`, `status`, `idea`, `next`, `list` i `run`.
-5. CLI zwraca też pełny prompt tekstowy dla etapu oraz referencję, np. `@.simple-planning/commands/Discovery.md`, żeby agent nie musiał dodatkowo czytać pliku, ale użytkownik nadal widział źródło instrukcji.
-6. Po ukończeniu głównego etapu `tasks` kolejne kroki to `decision-log` i `parking-lot`; `continue` przygotuje `07` i `08` po kolei (jeden plik na jedno wywołanie), chyba że użyjesz jawnego `run decision-log` / `run parking-lot`.
-
-W repo źródłowym folder `commands/` jest źródłem promptów używanych przez CLI, w tym promptów bootstrapowych `Vision.md` i `Roadmap.md`. Po `simple-planning init` projekt dostaje własny folder `.simple-planning/commands/`, więc lokalne zmiany promptów są respektowane i nie są hardcoded w kodzie.
-
 ## Struktura repo
+
+Poniżej — układ **względem katalogu planistycznego** (po `simple-planning init` leży on pod `.simple-planning/planning/`).
 
 ```text
 product/
