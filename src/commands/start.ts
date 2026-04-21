@@ -1,6 +1,8 @@
 import {
-  type CommandResult,
+  assertPrepareResultData,
+  type IdeaCommandSuccess,
   type PrepareResultData,
+  type StartCommandSuccess,
   type StartResultData,
 } from "../lib/contracts.js";
 import { runIdeaCommand } from "./idea.js";
@@ -11,19 +13,9 @@ export async function runStartCommand(args: {
   cwd: string;
   name: string;
   description: string;
-}): Promise<CommandResult> {
-  const ideaResult = await runIdeaCommand(args);
-  const ideaData = ideaResult.data as
-    | {
-        featureSlug: string;
-        featureDirectory: string;
-        ideaFile: string;
-      }
-    | undefined;
-
-  if (!ideaData) {
-    throw new Error("Komenda 'idea' nie zwróciła danych potrzebnych do startu feature'a.");
-  }
+}): Promise<StartCommandSuccess> {
+  const ideaResult: IdeaCommandSuccess = await runIdeaCommand(args);
+  const ideaData = ideaResult.data;
 
   const prepareResult = await runStepCommand({
     cwd: args.cwd,
@@ -34,12 +26,9 @@ export async function runStartCommand(args: {
   });
 
   const state = await loadFeatureState(args.cwd, ideaData.featureSlug);
-  const prepareData = prepareResult.data as PrepareResultData | undefined;
-  if (!prepareData) {
-    throw new Error(
-      "Komenda 'run discovery' nie zwróciła danych potrzebnych do przygotowania startu feature'a.",
-    );
-  }
+  const prepareData: PrepareResultData = assertPrepareResultData(
+    prepareResult.data,
+  );
 
   const data: StartResultData = {
     ...summarizeFeatureState(state),

@@ -1,6 +1,6 @@
 import {
-  type CommandResult,
   type PrepareResultData,
+  type RunCommandSuccess,
   type Step,
   type StepCompletionData,
 } from "../lib/contracts.js";
@@ -42,7 +42,7 @@ export async function runStepCommand(args: {
   feature?: string;
   complete: boolean;
   confirmedByUser: boolean;
-}): Promise<CommandResult> {
+}): Promise<RunCommandSuccess> {
   const step = assertKnownStep(args.stepRaw);
   if (step === "idea") {
     throw new Error(

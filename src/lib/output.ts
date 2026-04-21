@@ -1,4 +1,4 @@
-import { type CommandResult } from "./contracts.js";
+import { type CommandFailureResult, type CommandResult } from "./contracts.js";
 
 export function printResult(result: CommandResult): void {
   process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
@@ -7,7 +7,7 @@ export function printResult(result: CommandResult): void {
 export function buildErrorResult(
   command: string,
   error: unknown,
-): CommandResult {
+): CommandFailureResult {
   const message = error instanceof Error ? error.message : "Nieznany błąd.";
   return {
     ok: false,

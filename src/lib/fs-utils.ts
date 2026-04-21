@@ -14,9 +14,30 @@ export async function fileExists(filePath: string): Promise<boolean> {
   }
 }
 
-export async function readJsonFile<T>(filePath: string): Promise<T> {
-  const contents = await fs.readFile(filePath, "utf8");
-  return JSON.parse(contents) as T;
+/**
+ * Odczytuje i parsuje JSON z pliku. Zwraca `unknown` — walidacja odbywa się osobno (np. Zod).
+ * Przy błędzie składni JSON komunikat zawiera ścieżkę pliku (diagnostyka stanu workflow).
+ */
+export async function readJsonFile(filePath: string): Promise<unknown> {
+  let contents: string;
+  try {
+    contents = await fs.readFile(filePath, "utf8");
+  } catch (error) {
+    throw new Error(
+      `Nie można odczytać pliku '${filePath}'. ${error instanceof Error ? error.message : String(error)}`,
+    );
+  }
+
+  try {
+    return JSON.parse(contents) as unknown;
+  } catch (error) {
+    if (error instanceof SyntaxError) {
+      throw new Error(
+        `Nie można sparsować JSON w pliku '${filePath}': ${error.message}`,
+      );
+    }
+    throw error;
+  }
 }
 
 export async function readTextFile(filePath: string): Promise<string> {

@@ -1,4 +1,4 @@
-import { type CommandResult } from "../lib/contracts.js";
+import { type IdeaCommandSuccess } from "../lib/contracts.js";
 import { ensureDirectory, ensureFileWithContent } from "../lib/fs-utils.js";
 import { getGuideText } from "../lib/guides.js";
 import { getFeatureDirectory } from "../lib/project-paths.js";
@@ -17,7 +17,7 @@ export async function runIdeaCommand(args: {
   cwd: string;
   name: string;
   description: string;
-}): Promise<CommandResult> {
+}): Promise<IdeaCommandSuccess> {
   const index = await ensureProjectIndex(args.cwd);
 
   const state = createFeatureState(args.cwd, args.name);

@@ -625,6 +625,55 @@ test("continue resumes checkpoint for the single feature awaiting confirmation",
   );
 });
 
+test("next without --feature resolves the same feature as resolveFeatureSelection when one awaits confirmation", async () => {
+  const cwd = await createTempWorkspace();
+
+  runCli(cwd, ["init"]);
+  runCli(cwd, [
+    "start",
+    "--name",
+    "Feature Alpha",
+    "--description",
+    "Opis idei.",
+  ]);
+
+  const discoveryFile = path.join(
+    cwd,
+    ".simple-planning",
+    "planning",
+    "features",
+    "feature-alpha",
+    "02-discovery.md",
+  );
+  await writeMeaningfulDoc(discoveryFile, "Discovery", "Co już istnieje");
+
+  runCli(cwd, [
+    "run",
+    "discovery",
+    "--feature",
+    "feature-alpha",
+    "--complete",
+  ]);
+
+  runCli(cwd, [
+    "start",
+    "--name",
+    "Feature Beta",
+    "--description",
+    "Drugi opis idei.",
+  ]);
+
+  const nextResult = runCli(cwd, ["next"]);
+  assert.equal(nextResult.status, 0);
+  assert.equal(nextResult.parsed.ok, true);
+  assert.equal(nextResult.parsed.agentAction, "stop_and_ask_user");
+  assert.equal(
+    nextResult.parsed.stopReason,
+    "awaiting_user_confirmation",
+  );
+  assert.equal(nextResult.parsed.data.featureSlug, "feature-alpha");
+});
+
 test("continue completes meaningful active step and prepares next without run --complete", async () => {
   const cwd = await createTempWorkspace();
 

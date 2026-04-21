@@ -4,13 +4,13 @@ overview: Doprowadzenie repo do stanu bezpiecznej i profesjonalnej publikacji na
 todos:
   - id: release-blockers
     content: "Usunąć blockery publikacji: LICENSE, package metadata, lifecycle build przy publish, minimalne CI."
-    status: pending
+    status: completed
   - id: fix-next-selection
     content: Naprawić błąd logiczny w `next` i dodać test regresyjny dla wieloznacznego wyboru feature'a.
-    status: pending
+    status: completed
   - id: harden-state
     content: Utwardzić odczyt i walidację plików stanu oraz sanity-check ścieżek w workflow state.
-    status: pending
+    status: completed
   - id: public-docs
     content: Przerobić README pod publiczny odbiór i dodać dokumenty repo hygiene (`SECURITY.md`, `CHANGELOG.md`, opcjonalnie `CONTRIBUTING.md`).
     status: pending
