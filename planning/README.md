@@ -1,5 +1,7 @@
 # Project Docs Workflow
 
+Szablon dokumentacji dołączany przez `simple-planning init` razem z `planning/` w projekcie docelowym. Instalacja CLI, skrypty deweloperskie i publikacja są opisane w głównym README repozytorium pakietu: [github.com/dudduss77/simple-planning](https://github.com/dudduss77/simple-planning).
+
 To repo służy do uporządkowanego rozwijania produktu i funkcjonalności z pomocą AI.
 W praktyce te materiały są teraz źródłem dla CLI `simple-planning`, które dostarcza workflow do innych projektów.
 
