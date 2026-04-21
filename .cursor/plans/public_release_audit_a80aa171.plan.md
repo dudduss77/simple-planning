@@ -16,7 +16,7 @@ todos:
     status: pending
   - id: release-confidence
     content: Rozszerzyć smoke testy o `next`, `idea` i podstawowe ścieżki CLI oraz przygotować checklistę release.
-    status: pending
+    status: completed
 isProject: false
 ---
 
