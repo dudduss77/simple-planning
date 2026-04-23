@@ -18,7 +18,7 @@
     "prepack": "npm run build",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "clean": "node -e \"import('node:fs/promises').then(fs=>fs.rm('dist',{recursive:true,force:true}))\"",
-    "test": "pnpm build && node --test test/**/*.test.mjs"
+    "test": "pnpm build && node --test"
   },
   "keywords": [
     "cli",
