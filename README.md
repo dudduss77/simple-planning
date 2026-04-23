@@ -8,22 +8,23 @@
 
 Zależność deweloperska (zalecane — stała wersja w projekcie):
 
-```bash
-pnpm add -D simple-planning
-```
+Aby nie zaśmiecać npmjs, aktualnie instalacja po przez komendę
 
 ```bash
-npm install --save-dev simple-planning
+pnpm add -D -w github:dudduss77/simple-planning#tag_wersji
 ```
 
-Po instalacji lokalnej wywołujesz `pnpm exec simple-planning …` / `npx simple-planning …` albo przez skrypt — w przykładach poniżej zostaje prefix `npx`, żeby działało w obu wariantach.
+Następnie inicjowanie simple-planning w projekcie
+```bash
+pnpm simple-planning init
+```
 
 ## Przykładowy flow (jeden konkretny przebieg)
 
-1. W katalogu repozytorium: `**npx simple-planning init**` — powstaje m.in. `.simple-planning/planning/` (dokumenty), `.simple-planning/commands/` (prompty dla CLI), `**.cursor/commands/**` (skróty pod Cursor).
-2. Ustal kontekst produktu (wizja, roadmapę): `**npx simple-planning bootstrap**` — CLI przygotuje kolejne pliki i podpowie, co otworzyć w edytorze.
-3. Nowa funkcjonalność: `**npx simple-planning start nazwa-feature**` — zakłada feature i od razu przygotowuje etap discovery.
-4. Dalej bez uruchamiania „wszystkiego naraz”: `**npx simple-planning work-on-current-step**` lub `**npx simple-planning continue**` — przejście przez checkpointy kolejnych dokumentów (`status`, `next`, `list` pomagają orientacji).
+1. W katalogu repozytorium: `**pnpm simple-planning init**` — powstaje m.in. `.simple-planning/planning/` (dokumenty), `.simple-planning/commands/` (prompty dla CLI), `**.cursor/commands/**` (skróty pod Cursor).
+2. Ustal kontekst produktu (wizja, roadmapę): `**pnpm simple-planning bootstrap**` — CLI przygotuje kolejne pliki i podpowie, co otworzyć w edytorze.
+3. Nowa funkcjonalność: `**pnpm simple-planning start nazwa-feature**` — zakłada feature i od razu przygotowuje etap discovery.
+4. Dalej bez uruchamiania „wszystkiego naraz”: `**pnpm simple-planning work-on-current-step**` lub `**pnpm simple-planning continue**` — przejście przez checkpointy kolejnych dokumentów (`status`, `next`, `list` pomagają orientacji).
 
 Szczegóły etapów i dobrych praktyk z AI są niżej w tym pliku („Kolejność pracy”, „Jak pracować z AI”).
 
