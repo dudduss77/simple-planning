@@ -1,8 +1,10 @@
 import {
+  assertPrepareResultData,
   type CommandResult,
   type ContinueResultData,
   type FeatureSelectionData,
   type PrepareResultData,
+  type RunCommandSuccess,
 } from "../lib/contracts.js";
 import { isDocumentMeaningful } from "../lib/fs-utils.js";
 import { getNextSuggestedStep } from "../lib/pipeline.js";
@@ -11,6 +13,7 @@ import {
   loadFeatureState,
   resolveFeatureSelection,
   saveFeatureState,
+  summarizeFeatureState,
   syncFeatureSummary,
 } from "../lib/state.js";
 import { runStepCommand } from "./run.js";
@@ -116,28 +119,26 @@ export async function runContinueCommand(args: {
   }
 
   if (state.awaitingUserConfirmation && state.nextSuggestedStep) {
-    const result = await runStepCommand({
+    const result: RunCommandSuccess = await runStepCommand({
       cwd: args.cwd,
       stepRaw: state.nextSuggestedStep,
       feature: state.slug,
       complete: false,
       confirmedByUser: true,
     });
-    const data = result.data as PrepareResultData | undefined;
+    const prepareData = assertPrepareResultData(result.data);
 
     return {
-      ok: result.ok,
+      ok: true,
       command: "continue",
       message:
         `Potwierdzono checkpoint dla '${state.slug}' i przygotowano etap '${state.nextSuggestedStep}'.`,
       agentAction: result.agentAction,
       stopReason: result.stopReason,
-      data: data
-        ? ({
-            ...data,
-            resumedFromCheckpoint: true,
-          } satisfies ContinueResultData)
-        : result.data,
+      data: {
+        ...prepareData,
+        resumedFromCheckpoint: true,
+      } satisfies ContinueResultData,
     };
   }
 
@@ -145,7 +146,7 @@ export async function runContinueCommand(args: {
     const activeDocPath = state.documents[state.activeStep].path;
     if (await isDocumentMeaningful(activeDocPath)) {
       const completedStep = state.activeStep;
-      const completeResult = await runStepCommand({
+      const completeResult: RunCommandSuccess = await runStepCommand({
         cwd: args.cwd,
         stepRaw: completedStep,
         feature: state.slug,
@@ -157,7 +158,7 @@ export async function runContinueCommand(args: {
 
       if (!stateAfter.nextSuggestedStep) {
         return {
-          ok: completeResult.ok,
+          ok: true,
           command: "continue",
           message: `Domknięto etap '${completedStep}' dla feature'a '${state.slug}'. ${completeResult.message}`,
           agentAction: completeResult.agentAction,
@@ -166,44 +167,42 @@ export async function runContinueCommand(args: {
         };
       }
 
-      const prepareResult = await runStepCommand({
+      const prepareResult: RunCommandSuccess = await runStepCommand({
         cwd: args.cwd,
         stepRaw: stateAfter.nextSuggestedStep,
         feature: stateAfter.slug,
         complete: false,
         confirmedByUser: stateAfter.awaitingUserConfirmation,
       });
-      const prepareData = prepareResult.data as PrepareResultData | undefined;
+      const prepareData = assertPrepareResultData(prepareResult.data);
 
       return {
-        ok: prepareResult.ok,
+        ok: true,
         command: "continue",
         message: `Domknięto etap '${completedStep}' i przygotowano etap '${stateAfter.nextSuggestedStep}' dla feature'a '${state.slug}'.`,
         agentAction: prepareResult.agentAction,
         stopReason: prepareResult.stopReason,
-        data: prepareData
-          ? ({
-              ...prepareData,
-              resumedFromCheckpoint: true,
-            } satisfies ContinueResultData)
-          : prepareResult.data,
+        data: {
+          ...prepareData,
+          resumedFromCheckpoint: true,
+        } satisfies ContinueResultData,
       };
     }
   }
 
   const stepToPrepare = state.activeStep ?? state.nextSuggestedStep;
   if (stepToPrepare) {
-    const result = await runStepCommand({
+    const result: RunCommandSuccess = await runStepCommand({
       cwd: args.cwd,
       stepRaw: stepToPrepare,
       feature: state.slug,
       complete: false,
       confirmedByUser: false,
     });
-    const data = result.data as PrepareResultData | undefined;
+    const prepareData = assertPrepareResultData(result.data);
 
     return {
-      ok: result.ok,
+      ok: true,
       command: "continue",
       message:
         state.activeStep === stepToPrepare
@@ -211,12 +210,10 @@ export async function runContinueCommand(args: {
           : `Przygotowano następny legalny etap '${stepToPrepare}' dla feature'a '${state.slug}'.`,
       agentAction: result.agentAction,
       stopReason: result.stopReason,
-      data: data
-        ? ({
-            ...data,
-            resumedFromCheckpoint: false,
-          } satisfies ContinueResultData)
-        : result.data,
+      data: {
+        ...prepareData,
+        resumedFromCheckpoint: false,
+      } satisfies ContinueResultData,
     };
   }
 
@@ -235,16 +232,7 @@ export async function runContinueCommand(args: {
       message: `Feature '${state.slug}' — wszystkie etapy workflow są domknięte.`,
       agentAction: "pipeline_complete",
       stopReason: "pipeline_completed",
-      data: {
-        featureId: state.featureId,
-        featureName: state.name,
-        featureSlug: state.slug,
-        activeStep: null,
-        lastCompletedStep: state.lastCompletedStep,
-        nextSuggestedStep: null,
-        awaitingUserConfirmation: false,
-        awaitingAfterStep: null,
-      },
+      data: summarizeFeatureState(state),
     };
   }
 
@@ -254,15 +242,6 @@ export async function runContinueCommand(args: {
     message: `Feature '${state.slug}' nie ma kolejnego legalnego etapu. Workflow jest domknięty.`,
     agentAction: "pipeline_complete",
     stopReason: "pipeline_completed",
-    data: {
-      featureId: state.featureId,
-      featureName: state.name,
-      featureSlug: state.slug,
-      activeStep: state.activeStep,
-      lastCompletedStep: state.lastCompletedStep,
-      nextSuggestedStep: state.nextSuggestedStep,
-      awaitingUserConfirmation: state.awaitingUserConfirmation,
-      awaitingAfterStep: state.awaitingAfterStep,
-    },
+    data: summarizeFeatureState(state),
   };
 }

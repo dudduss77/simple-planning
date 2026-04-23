@@ -20,12 +20,28 @@ function runCli(cwd, args, options = {}) {
   });
 
   const stdout = result.stdout.trim();
-  const parsed = stdout ? JSON.parse(stdout) : null;
+  let parsed = null;
+  if (stdout) {
+    try {
+      parsed = JSON.parse(stdout);
+    } catch {
+      parsed = null;
+    }
+  }
 
   return {
     ...result,
     parsed,
   };
+}
+
+/** stdout może być tekstem (np. help), nie JSON — bez parsowania */
+function runCliRaw(cwd, args, options = {}) {
+  return spawnSync(process.execPath, [cliPath, ...args], {
+    cwd,
+    encoding: "utf8",
+    input: options.input,
+  });
 }
 
 async function writeMeaningfulDoc(filePath, title, section = "Treść") {
@@ -165,6 +181,111 @@ test("init copies dedicated cursor commands", async () => {
   assert.doesNotMatch(
     bootstrapCommandText,
     /Po zaktualizowaniu bootstrapowego discovery uruchom `discoveryPreparation\.nextCommand`/,
+  );
+});
+
+test("help prints usage without JSON (no args, help, --help)", async () => {
+  const cwd = await createTempWorkspace();
+
+  const noArgs = runCliRaw(cwd, []);
+  assert.equal(noArgs.status, 0);
+  assert.match(noArgs.stdout, /simple-planning <command>/);
+  assert.match(noArgs.stdout, /\binit\b/);
+  assert.match(noArgs.stdout, /\bnext\b/);
+  assert.throws(
+    () => JSON.parse(noArgs.stdout.trim()),
+    SyntaxError,
+    "help ma być plain textem, nie JSON-em",
+  );
+
+  const helpCmd = runCliRaw(cwd, ["help"]);
+  assert.equal(helpCmd.status, 0);
+  assert.match(helpCmd.stdout, /simple-planning <command>/);
+
+  const helpFlag = runCliRaw(cwd, ["--help"]);
+  assert.equal(helpFlag.status, 0);
+  assert.match(helpFlag.stdout, /simple-planning <command>/);
+});
+
+test("unknown command exits with JSON error", async () => {
+  const cwd = await createTempWorkspace();
+
+  const bad = runCli(cwd, ["totally-unknown-command"]);
+  assert.equal(bad.status, 1);
+  assert.equal(bad.parsed.ok, false);
+  assert.match(
+    bad.parsed.message,
+    /Nieznana komenda 'totally-unknown-command'/,
+  );
+});
+
+test("idea creates feature scaffold and points to discovery", async () => {
+  const cwd = await createTempWorkspace();
+
+  runCli(cwd, ["init"]);
+  const ideaResult = runCli(cwd, [
+    "idea",
+    "--name",
+    "Parking ideas",
+    "--description",
+    "Krótki zarys bez od razu full discovery.",
+  ]);
+
+  assert.equal(ideaResult.status, 0);
+  assert.equal(ideaResult.parsed.ok, true);
+  assert.equal(ideaResult.parsed.command, "idea");
+  assert.equal(ideaResult.parsed.agentAction, "prepare_next_step");
+  assert.equal(ideaResult.parsed.data.featureSlug, "parking-ideas");
+  assert.equal(
+    ideaResult.parsed.data.nextSuggestedStep,
+    "discovery",
+  );
+  assert.match(
+    ideaResult.parsed.data.nextCommand,
+    /simple-planning run discovery --feature parking-ideas/,
+  );
+
+  const ideaFile = path.join(
+    cwd,
+    ".simple-planning",
+    "planning",
+    "features",
+    "parking-ideas",
+    "01-idea.md",
+  );
+  await assert.doesNotReject(() => fs.access(ideaFile));
+  const ideaContents = await fs.readFile(ideaFile, "utf8");
+  assert.match(ideaContents, /Parking ideas/);
+});
+
+test("next asks user to choose when several active features lack disambiguating checkpoint", async () => {
+  const cwd = await createTempWorkspace();
+
+  runCli(cwd, ["init"]);
+  runCli(cwd, [
+    "start",
+    "--name",
+    "Feature Alpha",
+    "--description",
+    "Pierwszy równoległy.",
+  ]);
+  runCli(cwd, [
+    "start",
+    "--name",
+    "Feature Beta",
+    "--description",
+    "Drugi równoległy.",
+  ]);
+
+  const nextResult = runCli(cwd, ["next"]);
+  assert.equal(nextResult.status, 0);
+  assert.equal(nextResult.parsed.ok, true);
+  assert.equal(nextResult.parsed.agentAction, "choose_feature");
+  assert.equal(nextResult.parsed.data.selectionRequired, true);
+  assert.equal(nextResult.parsed.data.availableFeatures.length, 2);
+  assert.match(
+    nextResult.parsed.data.suggestedCommand,
+    /simple-planning next --feature <slug\|id>/,
   );
 });
 
@@ -623,6 +744,55 @@ test("continue resumes checkpoint for the single feature awaiting confirmation",
     workResult.parsed.message,
     /Wznowiono aktywny etap 'product-spec'/,
   );
+});
+
+test("next without --feature picks awaiting-confirmation feature when multiple actives exist (checkpoint disambiguates)", async () => {
+  const cwd = await createTempWorkspace();
+
+  runCli(cwd, ["init"]);
+  runCli(cwd, [
+    "start",
+    "--name",
+    "Feature Alpha",
+    "--description",
+    "Opis idei.",
+  ]);
+
+  const discoveryFile = path.join(
+    cwd,
+    ".simple-planning",
+    "planning",
+    "features",
+    "feature-alpha",
+    "02-discovery.md",
+  );
+  await writeMeaningfulDoc(discoveryFile, "Discovery", "Co już istnieje");
+
+  runCli(cwd, [
+    "run",
+    "discovery",
+    "--feature",
+    "feature-alpha",
+    "--complete",
+  ]);
+
+  runCli(cwd, [
+    "start",
+    "--name",
+    "Feature Beta",
+    "--description",
+    "Drugi opis idei.",
+  ]);
+
+  const nextResult = runCli(cwd, ["next"]);
+  assert.equal(nextResult.status, 0);
+  assert.equal(nextResult.parsed.ok, true);
+  assert.equal(nextResult.parsed.agentAction, "stop_and_ask_user");
+  assert.equal(
+    nextResult.parsed.stopReason,
+    "awaiting_user_confirmation",
+  );
+  assert.equal(nextResult.parsed.data.featureSlug, "feature-alpha");
 });
 
 test("continue completes meaningful active step and prepares next without run --complete", async () => {

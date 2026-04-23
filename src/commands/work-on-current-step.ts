@@ -1,11 +1,13 @@
 import {
+  assertPrepareResultData,
   type CommandResult,
   type FeatureSelectionData,
-  type PrepareResultData,
+  type RunCommandSuccess,
 } from "../lib/contracts.js";
 import {
   loadFeatureState,
   resolveActiveStepFeatureSelection,
+  summarizeFeatureState,
 } from "../lib/state.js";
 import { runStepCommand } from "./run.js";
 
@@ -101,14 +103,7 @@ export async function runWorkOnCurrentStepCommand(args: {
       agentAction: "stop_and_ask_user",
       stopReason: "none",
       data: {
-        featureId: state.featureId,
-        featureName: state.name,
-        featureSlug: state.slug,
-        activeStep: state.activeStep,
-        lastCompletedStep: state.lastCompletedStep,
-        nextSuggestedStep: state.nextSuggestedStep,
-        awaitingUserConfirmation: state.awaitingUserConfirmation,
-        awaitingAfterStep: state.awaitingAfterStep,
+        ...summarizeFeatureState(state),
         suggestedCommands: [
           `simple-planning continue --feature ${state.slug}`,
           `simple-planning status --feature ${state.slug}`,
@@ -117,21 +112,20 @@ export async function runWorkOnCurrentStepCommand(args: {
     };
   }
 
-  const result = await runStepCommand({
+  const result: RunCommandSuccess = await runStepCommand({
     cwd: args.cwd,
     stepRaw: state.activeStep,
     feature: state.slug,
     complete: false,
     confirmedByUser: false,
   });
-  const data = result.data as PrepareResultData | undefined;
 
   return {
-    ok: result.ok,
+    ok: true,
     command: "work-on-current-step",
     message: `Wznowiono aktywny etap '${state.activeStep}' dla feature'a '${state.slug}'. Nie przygotowano żadnego kolejnego kroku.`,
     agentAction: result.agentAction,
     stopReason: result.stopReason,
-    data,
+    data: assertPrepareResultData(result.data),
   };
 }

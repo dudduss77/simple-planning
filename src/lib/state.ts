@@ -3,6 +3,8 @@ import fs from "node:fs/promises";
 import path from "node:path";
 
 import {
+  FEATURE_STATE_FORMAT_VERSION,
+  PROJECT_INDEX_FORMAT_VERSION,
   allSteps,
   type FeatureCloseReason,
   type DocumentRecord,
@@ -25,9 +27,15 @@ import {
   getStateRoot,
 } from "./project-paths.js";
 import { getFeatureDocumentPaths } from "./templates.js";
+import {
+  documentPathsNeedRewrite,
+  parseValidatedFeatureState,
+  parseValidatedProjectIndex,
+  reconstructFeatureDocumentPaths,
+} from "./state-schemas.js";
 
-export const CURRENT_PROJECT_INDEX_VERSION = 2;
-export const CURRENT_FEATURE_STATE_VERSION = 2;
+export const CURRENT_PROJECT_INDEX_VERSION = PROJECT_INDEX_FORMAT_VERSION;
+export const CURRENT_FEATURE_STATE_VERSION = FEATURE_STATE_FORMAT_VERSION;
 
 type RawProjectIndex = Omit<ProjectIndex, "version" | "lastMigrationAt"> & {
   version?: number;
@@ -79,7 +87,7 @@ export async function ensureProjectIndex(cwd: string): Promise<ProjectIndex> {
   const indexPath = getIndexPath(cwd);
   if (!(await fileExists(indexPath))) {
     const initialIndex: ProjectIndex = {
-      version: CURRENT_PROJECT_INDEX_VERSION,
+      version: PROJECT_INDEX_FORMAT_VERSION,
       initializedAt: nowIso(),
       updatedAt: nowIso(),
       lastMigrationAt: null,
@@ -127,7 +135,7 @@ export function createFeatureState(cwd: string, name: string): FeatureState {
   ) as Record<Step, DocumentRecord>;
 
   return {
-    version: CURRENT_FEATURE_STATE_VERSION,
+    version: FEATURE_STATE_FORMAT_VERSION,
     featureId,
     name,
     slug,
@@ -463,7 +471,7 @@ export async function loadFeatureState(
   }
 
   const statePath = getFeatureStatePath(cwd, resolution.feature.featureId);
-  const migration = await readMigratedFeatureState(statePath);
+  const migration = await readMigratedFeatureState(cwd, statePath);
   if (migration.changed) {
     await writeJsonFile(statePath, migration.state);
   }
@@ -478,9 +486,9 @@ function migrateProjectIndex(raw: RawProjectIndex): {
   changed: boolean;
 } {
   const sourceVersion = raw.version ?? 1;
-  if (sourceVersion > CURRENT_PROJECT_INDEX_VERSION) {
+  if (sourceVersion > PROJECT_INDEX_FORMAT_VERSION) {
     throw new Error(
-      `Wykryto nowszą wersję index.json (${sourceVersion}) niż obsługiwana przez CLI (${CURRENT_PROJECT_INDEX_VERSION}).`,
+      `Wykryto nowszą wersję index.json (${sourceVersion}) niż obsługiwana przez CLI (${PROJECT_INDEX_FORMAT_VERSION}).`,
     );
   }
 
@@ -489,11 +497,11 @@ function migrateProjectIndex(raw: RawProjectIndex): {
     initializedAt: raw.initializedAt,
     updatedAt: raw.updatedAt,
     lastMigrationAt: raw.lastMigrationAt ?? null,
-    features: raw.features,
+    features: raw.features ?? [],
   };
   let changed = raw.version === undefined || raw.lastMigrationAt === undefined;
 
-  while (state.version < CURRENT_PROJECT_INDEX_VERSION) {
+  while (state.version < PROJECT_INDEX_FORMAT_VERSION) {
     switch (state.version) {
       case 1: {
         state = {
@@ -518,9 +526,9 @@ function migrateFeatureState(raw: RawFeatureState): {
   changed: boolean;
 } {
   const sourceVersion = raw.version ?? 1;
-  if (sourceVersion > CURRENT_FEATURE_STATE_VERSION) {
+  if (sourceVersion > FEATURE_STATE_FORMAT_VERSION) {
     throw new Error(
-      `Wykryto nowszą wersję feature state (${sourceVersion}) niż obsługiwana przez CLI (${CURRENT_FEATURE_STATE_VERSION}).`,
+      `Wykryto nowszą wersję feature state (${sourceVersion}) niż obsługiwana przez CLI (${FEATURE_STATE_FORMAT_VERSION}).`,
     );
   }
 
@@ -544,7 +552,7 @@ function migrateFeatureState(raw: RawFeatureState): {
   };
   let changed = raw.version === undefined || raw.lastMigrationAt === undefined;
 
-  while (state.version < CURRENT_FEATURE_STATE_VERSION) {
+  while (state.version < FEATURE_STATE_FORMAT_VERSION) {
     switch (state.version) {
       case 1: {
         state = {
@@ -568,16 +576,26 @@ async function readMigratedProjectIndex(indexPath: string): Promise<{
   state: ProjectIndex;
   changed: boolean;
 }> {
-  const raw = await readJsonFile<RawProjectIndex>(indexPath);
-  return migrateProjectIndex(raw);
+  const raw = await readJsonFile(indexPath);
+  const migration = migrateProjectIndex(raw as RawProjectIndex);
+  const state = parseValidatedProjectIndex(indexPath, migration.state);
+  return { state, changed: migration.changed };
 }
 
-async function readMigratedFeatureState(statePath: string): Promise<{
+async function readMigratedFeatureState(
+  cwd: string,
+  statePath: string,
+): Promise<{
   state: FeatureState;
   changed: boolean;
 }> {
-  const raw = await readJsonFile<RawFeatureState>(statePath);
-  return migrateFeatureState(raw);
+  const raw = await readJsonFile(statePath);
+  const migration = migrateFeatureState(raw as RawFeatureState);
+  const validated = parseValidatedFeatureState(statePath, migration.state);
+  const pathsUntrusted = documentPathsNeedRewrite(cwd, validated);
+  const state = reconstructFeatureDocumentPaths(cwd, validated);
+  const changed = migration.changed || pathsUntrusted;
+  return { state, changed };
 }
 
 export async function migrateProjectStateFiles(cwd: string): Promise<{
@@ -609,7 +627,7 @@ export async function migrateProjectStateFiles(cwd: string): Promise<{
     }
 
     const statePath = path.join(featureStateRoot, entry.name);
-    const stateMigration = await readMigratedFeatureState(statePath);
+    const stateMigration = await readMigratedFeatureState(cwd, statePath);
     if (!stateMigration.changed) {
       continue;
     }
@@ -625,6 +643,11 @@ export async function refreshFeatureDocuments(state: FeatureState): Promise<void
   const refreshedEntries = await Promise.all(
     allSteps.map(async (step) => {
       const record = state.documents[step];
+      if (!record) {
+        throw new Error(
+          `Brak wpisu documents['${step}'] w stanie feature'a '${state.slug}'. Plik stanu jest uszkodzony lub niekompletny.`,
+        );
+      }
       return [step, { ...record, exists: await fileExists(record.path) }] as const;
     }),
   );

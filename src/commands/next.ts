@@ -92,7 +92,8 @@ export async function runNextCommand(args: {
     };
   }
 
-  const state = await loadFeatureState(args.cwd, args.feature);
+  const featureRef = args.feature ?? selection.feature.slug;
+  const state = await loadFeatureState(args.cwd, featureRef);
   await saveFeatureState(args.cwd, state);
   await syncFeatureSummary(args.cwd, state);
 

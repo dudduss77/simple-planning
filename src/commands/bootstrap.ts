@@ -1,10 +1,12 @@
 import path from "node:path";
 
 import {
+  assertPrepareResultData,
   type BootstrapDocumentTask,
   type BootstrapResultData,
   type CommandResult,
   type PrepareResultData,
+  type RunCommandSuccess,
 } from "../lib/contracts.js";
 import {
   ensureFileWithContent,
@@ -134,19 +136,16 @@ export async function runBootstrapCommand(args: {
   }
 
   const bootstrapFeature = await ensureBootstrapFeature(args.cwd);
-  const prepareDiscovery = await runStepCommand({
+  const prepareDiscovery: RunCommandSuccess = await runStepCommand({
     cwd: args.cwd,
     stepRaw: "discovery",
     feature: BOOTSTRAP_FEATURE_SLUG,
     complete: false,
     confirmedByUser: false,
   });
-  const prepareData = prepareDiscovery.data as PrepareResultData | undefined;
-  if (!prepareData) {
-    throw new Error(
-      "Komenda 'bootstrap' nie otrzymała danych przygotowania bootstrapowego discovery.",
-    );
-  }
+  const prepareData: PrepareResultData = assertPrepareResultData(
+    prepareDiscovery.data,
+  );
 
   const documents: BootstrapDocumentTask[] = [
     {
