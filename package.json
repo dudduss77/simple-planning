@@ -33,6 +33,7 @@
   "bugs": {
     "url": "https://github.com/dudduss77/simple-planning/issues"
   },
+  "homepage": "https://github.com/dudduss77/simple-planning",
   "license": "MIT",
   "engines": {
     "node": ">=20.0.0"
