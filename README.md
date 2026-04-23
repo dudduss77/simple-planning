@@ -1,6 +1,6 @@
 # Project Docs Workflow
 
-> **To jest eksperyment na prywatne potrzeby** — nie obiecuję stabilnego API ani długiego wsparcia. Kod jest na **MIT** (`LICENSE`); jeśli forma Ci pasuje, możesz forkować i prowadzić własną wersję. Zgłoszenia usterek: pole `bugs` / Issues repozytorium z `package.json`. Projekt powstał pod CursorAI i jest oparty o commands. Ma on na celu zorganizowanie pracy nad daną funkcjonalnością. Aktualne testy na prostym projekcie dały wymierne rezultaty, w wiekszych projektach nie testowano.
+> **To jest eksperyment na prywatne potrzeby** — nie obiecuję stabilnego API ani długiego wsparcia. Kod jest na **MIT** (`LICENSE`); jeśli forma Ci pasuje, możesz forkować i prowadzić własną wersję. Zgłoszenia usterek: pole `bugs` / Issues repozytorium z `package.json`. Projekt powstał pod CursorAI i jest oparty o commands. Ma on na celu zorganizowanie pracy nad daną funkcjonalnością. Aktualne testy na prostym projekcie dały wymierne rezultaty, w wiekszych projektach nie testowano. Projekt stworzony przy wykorzystaniu AI.
 
 **simple-planning** to małe CLI które **inicjalizuje szkielet planistyczny** w Twoim repozytorium (`product/`, `features/` pod `.simple-planning/planning/`) i **krok po kroku przygotowuje kolejne dokumenty** (discovery, MVP, tasks itd.), tak żeby praca z modelem AI była na stałych plikach zamiast na rozproszonych notatkach.
 
